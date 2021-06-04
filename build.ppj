@@ -14,7 +14,7 @@
   </Variables>
   <Imports>
     <Import>@MyProject/Scripts/Source</Import>		
-    <Import>https://https://github.com/kannonfodder/loose-tes-files/tree/master/Scripts/Source</Import>
+    <Import>https://github.com/kannonfodder/loose-tes-files/tree/master/Scripts/Source</Import>
 	<Import>https://api.github.com/repos/fireundubh/skyui/contents/dist/Data/Scripts/Source?ref=master</Import>        
 	<Import>https://github.com/eeveelo/PapyrusUtil/tree/master/Scripts/Source</Import>		
     <Import>https://github.com/Sairion350/OStim/tree/main/Scripts/Source</Import>
