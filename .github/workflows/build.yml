@@ -32,7 +32,7 @@ jobs:
     - name: Pull papyrus compiler
       uses: actions/checkout@v2
       with:
-        repository: Osmosis-Wrench/JContainers-Compiler-Only
+        repository: Osmosis-Wrench/JContainers-Compiler-Only@master
         token: ${{ secrets.PPJ_ACCESS_TOKEN }}
         path: ./compiler
 
