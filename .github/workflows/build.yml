@@ -49,6 +49,12 @@ jobs:
       run: 7z x ${Env:release_name} -opyro
       env: 
         release_name: ${{ steps.pyro_asset.outputs.name }}
+        
+    - name: Verify compiler is there
+      run: ls compiler
+      
+    - name: Other verify
+      run: ls ./compiler
 
     - name: Build releases
       run: |
