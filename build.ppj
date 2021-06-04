@@ -18,7 +18,10 @@
 	<Import>https://github.com/eeveelo/PapyrusUtil/tree/master/Scripts/Source</Import>		
         <Import>https://github.com/Sairion350/OStim/tree/main/Scripts/Source</Import>
         <Import>https://github.com/CE0/OSA-SE/tree/master/Data/Scripts/Source</Import>
-  </Imports>
+  </Imports>  
+  <Folders>
+      <Folder>@MyProject\Scripts\Source.</Folder>
+  </Folders>
   <Scripts>
 	<Script>@MyProject/Scripts/Source/KF_SUC_MCM.psc</Script>
 	<Script>@MyProject/Scripts/Source/KF_SUC_Track.psc</Script>
