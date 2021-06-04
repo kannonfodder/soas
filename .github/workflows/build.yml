@@ -53,8 +53,8 @@ jobs:
       run: |
         .\pyro\pyro --game-path . --compiler-path ${Env:ppj_c} --flags-path ${Env:ppj_f} --access-token ${Env:ppj_t} .\repo\${Env:ppj_p}
       env: 
-        ppj_c: compiler\PapyrusCompiler.exe
-        ppj_f: compiler\TESV_Papyrus_Flags.flg
+        ppj_c: ./compiler/PapyrusCompiler.exe
+        ppj_f: ./compiler/TESV_Papyrus_Flags.flg
         ppj_t: ${{ secrets.PPJ_ACCESS_TOKEN }}
         ppj_p: ${{ matrix.project-path }}
 
