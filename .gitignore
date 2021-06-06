@@ -1,2 +1,3 @@
-./buildscript.bat
-./build.ppj
+buildscript.bat
+build.ppj
+meta.ini
