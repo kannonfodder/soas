@@ -215,7 +215,7 @@ function InitPlayerForceBar()
 	PlayerForceBar.VAnchor = "bottom"
 	PlayerForceBar.X = 0.0
 	PlayerForceBar.Alpha = 0.0
-	PlayerForceBar.SetPercent(0.0)
+	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
 	PlayerForceBar.FillDirection = "Right"
 
 	
