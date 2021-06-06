@@ -10,7 +10,7 @@
     <Variable Name="Namespace" Value="Soul of a Succubus"/>
     <Variable Name="ModName" Value="@Namespace - Special Edition"/>
     <Variable Name="MyProject" Value="."/>
-	<Variable Name="Dist" Value="..\"/>
+	<Variable Name="Dist" Value="..\dist"/>
   </Variables>
   <Imports>
     <Import>@MyProject/Scripts/Source</Import>		
