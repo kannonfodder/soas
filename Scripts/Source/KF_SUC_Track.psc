@@ -18,8 +18,8 @@ Spell property DrainSpell auto
 	
 OsexIntegrationMain ostim 
 OSexBar PlayerForceBar
-OSexBar SecondActorForceBar
-OSexBar ThirdActorForceBar
+OSexBar Property SecondActorForceBar auto
+OSexBar Property ThirdActorForceBar auto
 
 Actor secondActor = none
 Actor thirdActor = none
@@ -38,8 +38,6 @@ Event OnInit()
 	register()	
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
 	PlayerForceBar = (Self as Quest) as OSexBar
-	SecondActorForceBar = (Self as Quest) as OSexBar
-	ThirdActorForceBar = (Self as Quest) as OSexBar	
 	InitPlayerForceBar()
 	InitVictimForceBar(SecondActorForceBar, 0)
 	InitVictimForceBar(ThirdActorForceBar, 1)
