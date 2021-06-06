@@ -1,1 +1,2 @@
-buildscript.bat
+./buildscript.bat
+./build.ppj
