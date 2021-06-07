@@ -56,12 +56,14 @@ endFunction
 function register()
 	RegisterForModEvent("ostim_start","OstimStartScene")
 	RegisterForModEvent("ostim_end","OStimEndScene")
+	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")
 	RegisterForKey(DrainKey)
 endFunction
 
 function unRegister()
 	UnregisterForModEvent("ostim_start")
 	UnregisterForModEvent("ostim_end")
+	UnregisterForModEvent("ostim_orgasm")
 	UnRegisterForKey(DrainKey)
 endFunction
 
@@ -69,6 +71,10 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 		
 	Actor[] currentActors = ostim.GetActors()
 	bool IsPlayerInvolved = false
+
+	if(currentActors.Length == 1)
+		return
+	endif
 	
 	if (currentActors[0] == playerref)
 		IsPlayerInvolved = true
@@ -130,6 +136,11 @@ endEvent
 Event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 	ResetActors()
 	SetBarVisible(PlayerForceBar, false)
+endEvent
+
+event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
+	Actor orgasmer = ostim.GetMostRecentOrgasmedActor()
+	Debug.MessageBox(orgasmer.GetDisplayName() + " orgasmed")
 endEvent
 
 function ResetActors()
@@ -203,7 +214,7 @@ function AbsorbForce(float amount)
 		PlayerLifeForce = MaxPlayerLifeForce
 	endif
 	
-	PlayerForceBar.ForcePercent(PlayerLifeForce / MaxPlayerLifeForce)
+	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
 		
 	MiscUtil.PrintConsole("Drained " + amount);
 endFunction
