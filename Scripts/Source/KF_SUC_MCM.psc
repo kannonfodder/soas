@@ -1,10 +1,11 @@
 Scriptname KF_SUC_MCM extends SKI_ConfigBase
 
-KF_SUC_Track Property core Auto
+KF_SUC_Track core
 
 int EnableSoas
 
 Event OnInit()
+	Debug.Notification("Setting up SoaS Menu")
 	core = (Self as Quest) as KF_SUC_Track
 endEvent
 
