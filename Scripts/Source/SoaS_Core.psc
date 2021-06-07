@@ -1,4 +1,4 @@
-Scriptname KF_SUC_Track extends Quest
+Scriptname SoaS_Core extends Quest
 
 Actor Property playerref auto
 
