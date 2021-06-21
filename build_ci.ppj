@@ -26,6 +26,7 @@
   <Scripts>
     <Script>@MyProject/Scripts/Source/SoaS_MCM.psc</Script>
     <Script>@MyProject/Scripts/Source/SoaS_Core.psc</Script>
+    <Script>@MyProject/Scripts/Source/SoaS_KeyHandle.psc</Script>
   </Scripts>
   <Packages Output="@MyProject">
     <Package Name="@ModName" RootDir="@MyProject">
