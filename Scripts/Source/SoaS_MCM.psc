@@ -1,7 +1,7 @@
 Scriptname SoaS_MCM extends nl_mcm_module
 
 SoaS_Core property core auto
-SoaS_KeyHandle property KeyHandler auto
+;SoaS_KeyHandle property KeyHandler auto
 
 int _soas_enabled_flag
 
@@ -27,7 +27,7 @@ event OnPageDraw()
     SetCursorFillMode(LEFT_TO_RIGHT)
     AddHeaderOption("Sweetest Taste")
     AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Enabling sweetest taste will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")    
-    AddKeyMapOptionST("AttemptSweetestKissMap","Toggle Draining Key", KeyHandler.defaultDrainKey, _soas_enabled_flag)
+    AddKeyMapOptionST("AttemptSweetestKissMap","Toggle Draining Key", 39, _soas_enabled_flag)
     SetCursorFillMode(TOP_TO_BOTTOM)
 endEvent
 
@@ -50,7 +50,8 @@ endstate
 
 state AttemptSweetestKissMap
     event OnDefaultST(string state_id)    
-        SetKeyMapOptionValueST(KeyHandler.AttemptSweetestKissKey)
+        SetKeyMapOptionValueST(core.SweetestTasteKeyCode)
+        RegisterForKey(core.SweetestTasteKeyCode)
     endEvent
 
     event OnHighLightST(string state_id)
@@ -58,7 +59,9 @@ state AttemptSweetestKissMap
     endevent
 
     event OnKeyMapChangeST(string state_id, int keycode)
-        KeyHandler.AttemptSweetestKissKey = keycode
+        UnregisterForKey(core.SweetestTasteKeyCode)
+        core.SweetestTasteKeyCode
+        RegisterforKey(core.SweetestTasteKeyCode)
         SetKeyMapOptionValueST(keycode)
     endevent
 endState

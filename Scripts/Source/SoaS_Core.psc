@@ -14,7 +14,7 @@ bool Property EnableUncontrolledDrain = true auto
 float Property PlayerLifeForce = 50.0 auto
 
 
-int Property SweetestTasteKeyCode auto
+int Property SweetestTasteKeyCode = 39 auto
 
 string property LifeForceName = "soas_life_force" auto
 
@@ -43,7 +43,7 @@ float MaxPlayerLifeForce = 500.0
 Event OnInit()
 	Debug.Notification("Setting up SoAS")
 	EnableSOAS = true	
-	register()	
+	register()
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
 	PlayerForceBar = (Self as Quest) as OSexBar
 	InitPlayerForceBar()
@@ -139,15 +139,18 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 	if(orgasmer == playerref)
 		if(EnableUncontrolledDrain)
 			PerformUncontrolledDrain()
-		endif	
+		endif		
 	Elseif(orgasmer == secondActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
+			MiscUtil.PrintConsole("SoaS: Key Pressed - performing sweetest taste")
 			PerformSweetestTaste(secondActor)
+		else
+			MiscUtil.PrintConsole("SoaS: Key NOT Pressed ")
 		endif
 	ElseIf(orgasmer == thirdActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
 			PerformSweetestTaste(thirdActor)
-		endif
+		endif		
 	endif
 endEvent
 
@@ -163,7 +166,7 @@ function ResetActors()
 endFunction
 
 float function StartPassiveDrain(Actor act, OSexBar bar)
-	MiscUtil.PrintConsole("SOAS: Started drain");
+	MiscUtil.PrintConsole("SoaS: Started drain");
 	float initialForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
 	bar.SetPercent(initialForce / 100)
 	SetBarVisible(bar, true)
@@ -171,11 +174,17 @@ float function StartPassiveDrain(Actor act, OSexBar bar)
 endFunction
 
 float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar)	
-	float passiveDrainAmount = PassiveDrainModifier * (ostim.GetActorExcitement(act) / 100) * (ostim.GetActorExcitement(playerref) / 100)
-	if(passiveDrainAmount < 0)
-		passiveDrainAmount = 0
+	float playerComponent = ostim.GetActorExcitement(playerref) + 1
+	if(playerComponent < 50.0)
+		playerComponent = 50.0
 	endif
-	MiscUtil.PrintConsole("SOAS: Drain Amount: " + passiveDrainAmount)
+	float victimComponent = Math.pow(ostim.GetActorExcitement(act) + 1, 1.5)
+	if(victimComponent < 0)
+		victimComponent = 0
+	endif	
+	float passiveDrainAmount = (PassiveDrainModifier * (victimComponent) * (playerComponent)) / 10000
+
+	MiscUtil.PrintConsole("SoaS: Drain Amount: " + passiveDrainAmount)
 	if(initialForce >= 1.0)
 		float clampedDrainAmount = passiveDrainAmount
 
