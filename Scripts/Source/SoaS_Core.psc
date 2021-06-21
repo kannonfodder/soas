@@ -45,6 +45,7 @@ Event OnInit()
 	EnableSOAS = true	
 	register()
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
+	
 	PlayerForceBar = (Self as Quest) as OSexBar
 	InitPlayerForceBar()
 	InitVictimForceBar(SecondActorForceBar, 0)
@@ -138,7 +139,10 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 	Actor orgasmer = ostim.GetMostRecentOrgasmedActor()	
 	if(orgasmer == playerref)
 		if(EnableUncontrolledDrain)
-			PerformUncontrolledDrain()
+			if(ostim.ChanceRoll(100))
+				Debug.MessageBox("You're losing control!")
+				PerformUncontrolledDrain()
+			endif
 		endif		
 	Elseif(orgasmer == secondActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
@@ -175,16 +179,23 @@ endFunction
 
 float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar)	
 	float playerComponent = ostim.GetActorExcitement(playerref) + 1
+	if(playerComponent > 100.0)
+		playerComponent = 100.0
+	endif
 	if(playerComponent < 50.0)
 		playerComponent = 50.0
 	endif
-	float victimComponent = Math.pow(ostim.GetActorExcitement(act) + 1, 1.5)
-	if(victimComponent < 0)
-		victimComponent = 0
-	endif	
+	float victimExcitement = ostim.GetActorExcitement(act)
+	if(victimExcitement <= 0.0)
+		victimExcitement = 0.1
+	endif
+	if(victimExcitement > 100.0)
+		victimExcitement = 100.0
+	endif
+	float victimComponent = Math.pow(victimExcitement, 1.5)
 	float passiveDrainAmount = (PassiveDrainModifier * (victimComponent) * (playerComponent)) / 10000
 
-	MiscUtil.PrintConsole("SoaS: Drain Amount: " + passiveDrainAmount)
+	;MiscUtil.PrintConsole("SoaS: Drain Amount: " + passiveDrainAmount)
 	if(initialForce >= 1.0)
 		float clampedDrainAmount = passiveDrainAmount
 
@@ -205,22 +216,27 @@ endFunction
 
 
 function PerformUncontrolledDrain() ; Succubus has lost control: Drain 3x active drain amount from the victim
-	AttemptDeadlyDrain(secondActor, 3) 
+	AttemptDeadlyDrain(secondActor, ActiveDrainAmount * 3.0) 
 	if (thirdActor != none)
-		AttemptDeadlyDrain(thirdActor, 3)
+		AttemptDeadlyDrain(thirdActor, ActiveDrainAmount * 3.0)
 	endif
 endFunction
 
 function PerformSweetestTaste(Actor act)
+	MiscUtil.PrintConsole("SoaS: performing sweetest taste")
 	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
 		AbsorbForce(50) ; reward for killing the victim
 	endif
 endFunction
 
 bool function AttemptDeadlyDrain(Actor act, float amountToDrain) ; Returns true if the drain killed the victim
+	MiscUtil.PrintConsole("SoaS: Draining " + amountToDrain)
 	float currentForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)	
 	if (currentForce < amountToDrain)
 		AbsorbForce(currentForce)
+		MiscUtil.PrintConsole("SoaS: Doing Deadly Drain")
+		ostim.EndAnimation()
+		Utility.Wait(0.5)
 		DrainSpell.RemoteCast(playerref, playerref, act)
 		return true
 	Else
@@ -243,10 +259,10 @@ function AbsorbForce(float amount)
 	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
 
 	if(PlayerLifeForce > 100)
-		PowerOfLilith.Cast(playerref, playerref)
+		playerref.AddSpell(PowerOfLilith)		
 	endif
 		
-	MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
+	;MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
 endFunction
 
 function InitPlayerForceBar()
