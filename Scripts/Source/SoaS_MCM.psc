@@ -1,7 +1,9 @@
 Scriptname SoaS_MCM extends nl_mcm_module
 
 SoaS_Core property core auto
+SoaS_KeyHandle property KeyHandler auto
 
+int _soas_enabled_flag
 
 event OnInit()
     RegisterModule("Core")
@@ -14,21 +16,31 @@ Event OnPageInit()
 endEvent
 
 event OnPageDraw()
+    if(core.EnableSOAS)
+        _soas_enabled_flag = OPTION_FLAG_NONE
+    Else
+        _soas_enabled_flag = OPTION_FLAG_DISABLED
+    endif
     SetCursorFillMode(TOP_TO_BOTTOM)
-    AddToggleOptionST("ModEnabledState", "Register for event", core.EnableSOAS)
-    AddKeyMapOptionST("ActiveDrainKeyMap","Active Drain", core.DrainKey)
+    AddToggleOptionST("ModEnabledState", "Enable SoaS", core.EnableSOAS)
+    AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag)
+    SetCursorFillMode(LEFT_TO_RIGHT)
+    AddHeaderOption("Sweetest Taste")
+    AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Enabling sweetest taste will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")    
+    AddKeyMapOptionST("AttemptSweetestKissMap","Toggle Draining Key", KeyHandler.defaultDrainKey, _soas_enabled_flag)
+    SetCursorFillMode(TOP_TO_BOTTOM)
 endEvent
 
 
 state ModEnabledState
     event OnDefaultST(string state_id)
         core.toggleRegister()
-        SetToggleOptionValueST(core.EnableSOAS, false, "ModEnabledState")
+        SetToggleOptionValueST(core.EnableSOAS)
     endevent
 
     event OnSelectST(string state_id)
         core.toggleRegister()
-        SetToggleOptionValueST(core.EnableSOAS, false, "ModEnabledState")
+        ForcePageReset()
     endevent
 
     event OnHighlightST(string state_id)
@@ -36,18 +48,32 @@ state ModEnabledState
     endevent
 endstate
 
-state ActiveDrainKeyMap
-    event OnDefaultSt(string state_id)
-        core.DrainKey = 40
-        SetKeyMapOptionValueST(core.DrainKey)
+state AttemptSweetestKissMap
+    event OnDefaultST(string state_id)    
+        SetKeyMapOptionValueST(KeyHandler.AttemptSweetestKissKey)
     endEvent
 
     event OnHighLightST(string state_id)
-        SetInfoText("Key to use to active drain. Warning may kill partner")
+        SetInfoText("If held during a victim orgasm, perform the sweetest taste. Potentially fatal.")
     endevent
 
     event OnKeyMapChangeST(string state_id, int keycode)
-        core.DrainKey = keycode
+        KeyHandler.AttemptSweetestKissKey = keycode
         SetKeyMapOptionValueST(keycode)
     endevent
 endState
+
+state EnableUncontrolledDrain
+    event OnDefaultST(string state_id)
+        SetToggleOptionValueST(core.EnableUncontrolledDrain)
+    endevent
+
+    event OnSelectST(string state_id)
+        core.EnableUncontrolledDrain = !core.EnableUncontrolledDrain
+        SetToggleOptionValueST(core.EnableUncontrolledDrain)
+    endevent
+
+    event OnHighlightST(string state_id)
+        SetInfoText("Enable uncontrolled drain chance on player orgasm. Warning this may be fatal to victim")
+    endevent
+endstate

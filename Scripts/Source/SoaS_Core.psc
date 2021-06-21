@@ -5,14 +5,20 @@ Actor Property playerref auto
 Bool Property EnableSOAS auto
 
 float Property DrainedForce auto
-float Property PassiveDrainAmount = 1.0 auto
-float Property ActiveDrainAmount = 25.0 auto
+float Property PassiveDrainModifier = 1.0 auto
+float Property DrainResultModifier = 5.0 auto
+float Property ActiveDrainAmount = 30.0 auto
+
+bool Property EnableUncontrolledDrain = true auto
 
 float Property PlayerLifeForce = 50.0 auto
 
-int Property DrainKey = 40 auto
+
+int Property SweetestTasteKeyCode auto
 
 string property LifeForceName = "soas_life_force" auto
+
+Spell property PowerOfLilith auto
 
 Spell property DrainSpell auto
 	
@@ -24,13 +30,15 @@ OSexBar Property ThirdActorForceBar auto
 Actor secondActor = none
 Actor thirdActor = none
 
+bool property drainActive = true auto
+
 float secondActorInitialForce
 float thirdActorInitialForce
 
 float secondActorPassiveDrain
 float thirdActorPassiveDrain
 
-float MaxPlayerLifeForce = 200.0
+float MaxPlayerLifeForce = 500.0
 
 Event OnInit()
 	Debug.Notification("Setting up SoAS")
@@ -56,74 +64,62 @@ endFunction
 function register()
 	RegisterForModEvent("ostim_start","OstimStartScene")
 	RegisterForModEvent("ostim_end","OStimEndScene")
-	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")
-	RegisterForKey(DrainKey)
+	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")	
 endFunction
 
 function unRegister()
 	UnregisterForModEvent("ostim_start")
 	UnregisterForModEvent("ostim_end")
 	UnregisterForModEvent("ostim_orgasm")
-	UnRegisterForKey(DrainKey)
 endFunction
 
 Event OstimStartScene(string eventName, string strArg, float numArg, Form sender)
 		
 	Actor[] currentActors = ostim.GetActors()
-	bool IsPlayerInvolved = false
-
-	if(currentActors.Length == 1)
-		return
-	endif
-	
-	if (currentActors[0] == playerref)
-		IsPlayerInvolved = true
-		secondActor = currentActors[1]
-		if(currentActors.Length == 3)
-			thirdActor = currentActors[2]
-		endif
-	elseif (currentActors[1] == playerref)
-		IsPlayerInvolved = true
-		secondActor = currentActors[0]
-		if(currentActors.Length == 3)
-			thirdActor = currentActors[2]
-		endif
-	elseif (currentActors.Length == 3 && currentActors[2] == playerref)
-		IsPlayerInvolved = true
-		secondActor = currentActors[0]
-		thirdActor = currentActors[1]	
-	endif
-	
-	
+	bool IsPlayerInvolved = ostim.IsPlayerInvolved()
 	if (IsPlayerInvolved)
+		if(currentActors.Length == 1)
+			return
+		endif
+		
+		if (currentActors[0] == playerref)
+			secondActor = currentActors[1]
+			if(currentActors.Length == 3)
+				thirdActor = currentActors[2]
+			endif
+		elseif (currentActors[1] == playerref)
+			secondActor = currentActors[0]
+			if(currentActors.Length == 3)
+				thirdActor = currentActors[2]
+			endif
+		elseif (currentActors.Length == 3 && currentActors[2] == playerref)
+			secondActor = currentActors[0]
+			thirdActor = currentActors[1]	
+		endif
+	
 
 		PlayerForceBar.ForcePercent(PlayerLifeForce / MaxPlayerLifeForce)
 		SetBarVisible(PlayerForceBar, true)
 
 		secondActorInitialForce = StartPassiveDrain(secondActor, SecondActorForceBar)
 		float currentSecondActorForce = secondActorInitialForce
-		float prevSecondActorExcitment = ostim.GetActorExcitement(secondActor)
 		
-		float prevThirdActorExcitement = 0.0
 		float currentThirdActorForce = 0.0
 
 		if(thirdActor != None)
 			thirdActorInitialForce = StartPassiveDrain(thirdActor, ThirdActorForcebar)
 			currentThirdActorForce = thirdActorInitialForce
-			prevThirdActorExcitement = ostim.GetActorExcitement(thirdActor)
 		endif		
 		
 		
 
 		While (ostim.animationRunning())
 			Utility.Wait(1)
-			float currentSecondActorExcitement = ostim.GetActorExcitement(secondActor)
-			currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar, prevSecondActorExcitment, currentSecondActorExcitement)
-			prevSecondActorExcitment = currentSecondActorExcitement
-			if(thirdActor != None)
-				float currentThirdActorExcitement = ostim.GetActorExcitement(secondActor)
-				currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar, prevThirdActorExcitement, currentThirdActorExcitement)
-				prevSecondActorExcitment = currentSecondActorExcitement
+			if (drainActive)
+				currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
+				if(thirdActor != None)
+					currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar)
+				endif
 			endif
 		EndWhile
 
@@ -139,8 +135,20 @@ Event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 endEvent
 
 event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
-	Actor orgasmer = ostim.GetMostRecentOrgasmedActor()
-	Debug.MessageBox(orgasmer.GetDisplayName() + " orgasmed")
+	Actor orgasmer = ostim.GetMostRecentOrgasmedActor()	
+	if(orgasmer == playerref)
+		if(EnableUncontrolledDrain)
+			PerformUncontrolledDrain()
+		endif	
+	Elseif(orgasmer == secondActor)
+		if(Input.IsKeyPressed(SweetestTasteKeyCode))
+			PerformSweetestTaste(secondActor)
+		endif
+	ElseIf(orgasmer == thirdActor)
+		if(Input.IsKeyPressed(SweetestTasteKeyCode))
+			PerformSweetestTaste(thirdActor)
+		endif
+	endif
 endEvent
 
 function ResetActors()
@@ -155,17 +163,28 @@ function ResetActors()
 endFunction
 
 float function StartPassiveDrain(Actor act, OSexBar bar)
-	MiscUtil.PrintConsole("Started drain");
+	MiscUtil.PrintConsole("SOAS: Started drain");
 	float initialForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
 	bar.SetPercent(initialForce / 100)
 	SetBarVisible(bar, true)
 	return initialForce
 endFunction
 
-float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar, float prevActorExcitement, float currentActorExcitement)	
-	if(currentActorExcitement > prevActorExcitement && PassiveDrainAmount <= initialForce && initialForce >= 1.0)
-		float currentForce = initialForce - PassiveDrainAmount
-		AbsorbForce(PassiveDrainAmount)		
+float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar)	
+	float passiveDrainAmount = PassiveDrainModifier * (ostim.GetActorExcitement(act) / 100) * (ostim.GetActorExcitement(playerref) / 100)
+	if(passiveDrainAmount < 0)
+		passiveDrainAmount = 0
+	endif
+	MiscUtil.PrintConsole("SOAS: Drain Amount: " + passiveDrainAmount)
+	if(initialForce >= 1.0)
+		float clampedDrainAmount = passiveDrainAmount
+
+		if(passiveDrainAmount > initialForce - 1)
+			clampedDrainAmount = initialForce - 1
+		endif
+
+		float currentForce = initialForce - clampedDrainAmount
+		AbsorbForce(clampedDrainAmount)		
 		actorForceBar.SetPercent((currentForce) / 100)
 		StorageUtil.SetFloatValue(act as form, LifeForceName, currentForce)
 		return currentForce
@@ -174,49 +193,51 @@ float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorFor
 endFunction
 
 
-Event OnKeyDown(int KeyCode)
-	If (Utility.IsInMenuMode() || UI.IsMenuOpen("console"))
-		Return
-	EndIf
-	if(KeyCode == DrainKey)
-		AttemptActiveDrain()
-	endif
-endEvent
 
-function AttemptActiveDrain()
-	if(ostim.animationRunning() && secondActor != None)
-		ostim.EndAnimation()
-		Utility.Wait(0.5)
-		PerformActiveDrain(secondActor)
-		if(thirdActor != None)
-			PerformActiveDrain(thirdActor)
-		endif
+
+function PerformUncontrolledDrain() ; Succubus has lost control: Drain 3x active drain amount from the victim
+	AttemptDeadlyDrain(secondActor, 3) 
+	if (thirdActor != none)
+		AttemptDeadlyDrain(thirdActor, 3)
 	endif
 endFunction
 
-function PerformActiveDrain(Actor act)
-	float currentForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
-	if (currentForce < ActiveDrainAmount)
+function PerformSweetestTaste(Actor act)
+	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
+		AbsorbForce(50) ; reward for killing the victim
+	endif
+endFunction
+
+bool function AttemptDeadlyDrain(Actor act, float amountToDrain) ; Returns true if the drain killed the victim
+	float currentForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)	
+	if (currentForce < amountToDrain)
 		AbsorbForce(currentForce)
-		DrainSpell.RemoteCast(playerref, playerref, act)		
+		DrainSpell.RemoteCast(playerref, playerref, act)
+		return true
 	Else
-		AbsorbForce(ActiveDrainAmount)
+		AbsorbForce(amountToDrain)
 		StorageUtil.SetFloatValue(act as form, LifeForceName, currentForce - ActiveDrainAmount)
+		return false
 	endif
 	
 endFunction
 
 function AbsorbForce(float amount)
-	DrainedForce += amount
-	if(PlayerLifeForce + amount < MaxPlayerLifeForce)
-		PlayerLifeForce += amount
+	float absorbValue = amount * DrainResultModifier
+	DrainedForce += absorbValue
+	if(PlayerLifeForce + absorbValue < MaxPlayerLifeForce)
+		PlayerLifeForce += absorbValue
 	Else
 		PlayerLifeForce = MaxPlayerLifeForce
 	endif
 	
 	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
+
+	if(PlayerLifeForce > 100)
+		PowerOfLilith.Cast(playerref, playerref)
+	endif
 		
-	MiscUtil.PrintConsole("Drained " + amount);
+	MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
 endFunction
 
 function InitPlayerForceBar()
