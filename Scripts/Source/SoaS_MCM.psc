@@ -1,18 +1,16 @@
 Scriptname SoaS_MCM extends nl_mcm_module
 
 SoaS_Core property core auto
-;SoaS_KeyHandle property KeyHandler auto
 
 int _soas_enabled_flag
 
 event OnInit()
-    RegisterModule("Core")
+    RegisterModule("Configuration")
 endEvent
 
 Event OnPageInit()
     SetModName("Soul of a Succubus")
-    SetLandingPage("Core")
-    Debug.Notification("Setting up SoaS Menu")
+    SetLandingPage("Configuration")
 endEvent
 
 event OnPageDraw()
@@ -23,12 +21,10 @@ event OnPageDraw()
     endif
     SetCursorFillMode(TOP_TO_BOTTOM)
     AddToggleOptionST("ModEnabledState", "Enable SoaS", core.EnableSOAS)
-    AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag)
-    SetCursorFillMode(LEFT_TO_RIGHT)
+    AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag)    
     AddHeaderOption("Sweetest Taste")
-    AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Enabling sweetest taste will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")    
     AddKeyMapOptionST("AttemptSweetestKissMap","Toggle Draining Key", 39, _soas_enabled_flag)
-    SetCursorFillMode(TOP_TO_BOTTOM)
+    AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Enabling sweetest taste will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")
 endEvent
 
 
