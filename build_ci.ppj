@@ -37,7 +37,7 @@
    
     <ZipFiles Output="@Dist">
         <ZipFile Name="@ModName" RootDir="@MyProject" Compression="deflate">
-        	<Include NoRecurse="true">*/*.esp</Include>
+        	<Include NoRecurse="true">*.esp</Include>
 	        <Include NoRecurse="true">*.bsa</Include>
 	        <Include NoRecurse="true">*/*.pex</Include>
 	        <Include NoRecurse="true">*/*/*.psc</Include>
