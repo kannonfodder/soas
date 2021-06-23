@@ -2,6 +2,11 @@ Scriptname SoaS_Core extends Quest
 
 Actor Property playerref auto
 
+Faction Property forcelevel0Faction auto
+Faction Property forcelevel1Faction auto
+Faction Property forcelevel2Faction auto
+Faction Property forcelevel3Faction Auto
+
 Bool Property EnableSOAS auto
 
 float Property DrainedForce auto
@@ -66,6 +71,7 @@ function register()
 	RegisterForModEvent("ostim_start","OstimStartScene")
 	RegisterForModEvent("ostim_end","OStimEndScene")
 	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")	
+	playerref.AddSpell(PowerOfLilith)
 endFunction
 
 function unRegister()
@@ -258,11 +264,45 @@ function AbsorbForce(float amount)
 	
 	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
 
-	if(PlayerLifeForce > 100)
-		playerref.AddSpell(PowerOfLilith)		
-	endif
+	CalculateLilethChanges()
 		
 	;MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
+endFunction
+
+function CalculateLilethChanges()
+	float level1Limit = 100.0
+	float level2Limit = 250.0
+	float level3Limit = 450.0
+
+	if(PlayerLifeForce < level1Limit)
+		if(!playerref.IsInFaction(forcelevel0Faction))
+			playerref.AddToFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel1Faction)
+			playerref.RemoveFromFaction(forcelevel2Faction)
+			playerref.RemoveFromFaction(forcelevel3Faction)
+		endif
+	elseif(PlayerLifeForce >= level1Limit && PlayerLifeForce < level2Limit)		
+		if(!playerref.IsInFaction(forcelevel1Faction))
+			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.AddToFaction(forcelevel1Faction)
+			playerref.RemoveFromFaction(forcelevel2Faction)
+			playerref.RemoveFromFaction(forcelevel3Faction)
+		endif
+	elseif(PlayerLifeForce >= level2Limit && PlayerLifeForce < level3Limit)	
+		if(!playerref.IsInFaction(forcelevel2Faction))
+			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel1Faction)
+			playerref.AddToFaction(forcelevel2Faction)
+			playerref.RemoveFromFaction(forcelevel3Faction)
+		endif
+	elseif(PlayerLifeForce >= level3Limit)		
+		if(!playerref.IsInFaction(forcelevel3Faction))
+			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel1Faction)
+			playerref.RemoveFromFaction(forcelevel2Faction)
+			playerref.AddToFaction(forcelevel3Faction)
+		endif
+	endif
 endFunction
 
 function InitPlayerForceBar()
