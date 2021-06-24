@@ -26,6 +26,7 @@ string property LifeForceName = "soas_life_force" auto
 Spell property PowerOfLilith auto
 
 Spell property DrainSpell auto
+Spell property SoulDrainAbility auto
 	
 OsexIntegrationMain ostim 
 OSexBar PlayerForceBar
@@ -77,7 +78,8 @@ endFunction
 function unRegister()
 	UnregisterForModEvent("ostim_start")
 	UnregisterForModEvent("ostim_end")
-	UnregisterForModEvent("ostim_orgasm")
+	UnregisterForModEvent("ostim_orgasm")		
+	playerref.RemoveSpell(PowerOfLilith)
 endFunction
 
 Event OstimStartScene(string eventName, string strArg, float numArg, Form sender)
@@ -222,25 +224,28 @@ endFunction
 
 
 function PerformUncontrolledDrain() ; Succubus has lost control: Drain 3x active drain amount from the victim
-	AttemptDeadlyDrain(secondActor, ActiveDrainAmount * 3.0) 
+	AttemptDeadlyDrain(secondActor, ActiveDrainAmount * 3.0, false) 
 	if (thirdActor != none)
-		AttemptDeadlyDrain(thirdActor, ActiveDrainAmount * 3.0)
+		AttemptDeadlyDrain(thirdActor, ActiveDrainAmount * 3.0, false)
 	endif
 endFunction
 
 function PerformSweetestTaste(Actor act)
 	MiscUtil.PrintConsole("SoaS: performing sweetest taste")
-	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
+	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5, true)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
 		AbsorbForce(50) ; reward for killing the victim
 	endif
 endFunction
 
-bool function AttemptDeadlyDrain(Actor act, float amountToDrain) ; Returns true if the drain killed the victim
+bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled) ; Returns true if the drain killed the victim
 	MiscUtil.PrintConsole("SoaS: Draining " + amountToDrain)
 	float currentForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)	
 	if (currentForce < amountToDrain)
 		AbsorbForce(currentForce)
 		MiscUtil.PrintConsole("SoaS: Doing Deadly Drain")
+		if(controlled)
+			act.AddSpell(SoulDrainAbility)
+		endif
 		ostim.EndAnimation()
 		Utility.Wait(0.5)
 		DrainSpell.RemoteCast(playerref, playerref, act)

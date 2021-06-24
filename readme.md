@@ -9,3 +9,7 @@ Perform powerful drains on your victims, but be careful...they may not survive!
 Draining effects your victims and buffs the player
 Use your powers to seduce your foes
 Unlock upgrades with your over time
+
+### Dependencies
+
+Ostim
