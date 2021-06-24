@@ -13,15 +13,19 @@ float Property DrainedForce auto
 float Property PassiveDrainModifier = 1.0 auto
 float Property DrainResultModifier = 5.0 auto
 float Property ActiveDrainAmount = 30.0 auto
+float Property ForceRegenRate = 100.0 auto ; Life force regenerated per day
 
 bool Property EnableUncontrolledDrain = true auto
 
 float Property PlayerLifeForce = 50.0 auto
+float PlayerLifeForceLastCheckTime = 0.0
+float Property PlayerLifeForConstantDrain = 500.0 auto
 
 
 int Property SweetestTasteKeyCode = 39 auto
 
 string property LifeForceName = "soas_life_force" auto
+string property LifeForceCheckName = "soas_life_force_check" auto
 
 Spell property PowerOfLilith auto
 
@@ -72,6 +76,7 @@ function register()
 	RegisterForModEvent("ostim_start","OstimStartScene")
 	RegisterForModEvent("ostim_end","OStimEndScene")
 	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")	
+	RegisterForSingleUpdate(3.0)
 	playerref.AddSpell(PowerOfLilith)
 endFunction
 
@@ -81,6 +86,22 @@ function unRegister()
 	UnregisterForModEvent("ostim_orgasm")		
 	playerref.RemoveSpell(PowerOfLilith)
 endFunction
+
+Event OnUpdate()
+	float currentTime = Utility.GetCurrentGameTime()	
+	if(PlayerLifeForceLastCheckTime != 0.0)				
+		float drainAmount = PlayerLifeForConstantDrain * (currentTime - PlayerLifeForceLastCheckTime)
+		if drainAmount > PlayerLifeForce
+			PlayerLifeForce = 0.0
+		else
+			PlayerLifeForce -= drainAmount
+		endif		
+	endif	
+	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
+	CalculateLilethChanges()
+	PlayerLifeForceLastCheckTime = currentTime
+	RegisterForSingleUpdate(3.0)
+endEvent
 
 Event OstimStartScene(string eventName, string strArg, float numArg, Form sender)
 		
@@ -179,7 +200,7 @@ endFunction
 
 float function StartPassiveDrain(Actor act, OSexBar bar)
 	MiscUtil.PrintConsole("SoaS: Started drain");
-	float initialForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
+	float initialForce = GetLifeForce(act)
 	bar.SetPercent(initialForce / 100)
 	SetBarVisible(bar, true)
 	return initialForce
@@ -214,7 +235,7 @@ float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorFor
 		float currentForce = initialForce - clampedDrainAmount
 		AbsorbForce(clampedDrainAmount)		
 		actorForceBar.SetPercent((currentForce) / 100)
-		StorageUtil.SetFloatValue(act as form, LifeForceName, currentForce)
+		SetLifeForce(act, currentForce)
 		return currentForce
 	endif
 	return initialForce
@@ -239,7 +260,7 @@ endFunction
 
 bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled) ; Returns true if the drain killed the victim
 	MiscUtil.PrintConsole("SoaS: Draining " + amountToDrain)
-	float currentForce = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)	
+	float currentForce = GetLifeForce(act)	
 	if (currentForce < amountToDrain)
 		AbsorbForce(currentForce)
 		MiscUtil.PrintConsole("SoaS: Doing Deadly Drain")
@@ -252,7 +273,7 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 		return true
 	Else
 		AbsorbForce(amountToDrain)
-		StorageUtil.SetFloatValue(act as form, LifeForceName, currentForce - ActiveDrainAmount)
+		SetLifeForce(act,currentForce - ActiveDrainAmount)
 		return false
 	endif
 	
@@ -281,13 +302,21 @@ function CalculateLilethChanges()
 
 	if(PlayerLifeForce < level1Limit)
 		if(!playerref.IsInFaction(forcelevel0Faction))
+			Debug.Notification("I feel all my strength leaving me")
+
 			playerref.AddToFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			
 		endif
 	elseif(PlayerLifeForce >= level1Limit && PlayerLifeForce < level2Limit)		
 		if(!playerref.IsInFaction(forcelevel1Faction))
+			if playerref.IsInFaction(forcelevel0Faction)
+				Debug.Notification("I'm feeling normal again, I should feed more to gain more power")
+			else	
+				Debug.Notification("I feel my power slipping. I no longer feel Lilith's power")
+			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.AddToFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
@@ -295,6 +324,11 @@ function CalculateLilethChanges()
 		endif
 	elseif(PlayerLifeForce >= level2Limit && PlayerLifeForce < level3Limit)	
 		if(!playerref.IsInFaction(forcelevel2Faction))
+			if playerref.IsInFaction(forcelevel0Faction) || playerref.IsInFaction(forcelevel1Faction)
+				Debug.Notification("Ultimate power is almost mine, I can taste it!")
+			else	
+				Debug.Notification("I've lost my ultimate power, but I can get it back")
+			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.AddToFaction(forcelevel2Faction)
@@ -302,6 +336,9 @@ function CalculateLilethChanges()
 		endif
 	elseif(PlayerLifeForce >= level3Limit)		
 		if(!playerref.IsInFaction(forcelevel3Faction))
+			if playerref.IsInFaction(forcelevel2Faction) || playerref.IsInFaction(forcelevel1Faction) || playerref.IsInFaction(forcelevel2Faction)
+				Debug.Notification("This is what true power feels like!")
+			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
@@ -349,5 +386,29 @@ function SetBarVisible(Osexbar bar, Bool visible)
 		bar.FadeTo(0.0, 1.0)
 		bar.FadedOut = True
 	EndIf
+endFunction
+
+float function GetLifeForce(Actor act)
+	
+	float lastCheckTime =  StorageUtil.GetFloatValue(act as form, LifeForceCheckName, 0)
+	StorageUtil.SetFloatValue(act, LifeForceCheckName, Utility.GetCurrentGameTime())
+
+	float storedAmount = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
+	if(lastcheckTime > 0)		
+		float currenttime = Utility.GetCurrentGameTime()
+		float timePassed = currenttime - lastCheckTime
+		float regenAmount = ForceRegenRate * timePassed
+		if(regenAmount > 100.0 - storedAmount)
+			storedAmount = 100.0
+		else
+			storedAmount += regenAmount
+		endif
+		SetLifeForce(act, storedAmount)
+	endif
+	return storedAmount
+endFunction
+
+function SetLifeForce(Actor act, float amount)
+	StorageUtil.SetFloatValue(act as form, LifeForceName, amount)
 endFunction
 
