@@ -5,7 +5,6 @@ on:
   push:
     branches:
     - master
-    - release
 
 jobs:
   build:
@@ -75,25 +74,3 @@ jobs:
     - name: Get current date
       id: date
       run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
-    - name: Create Github Release
-      if: success() && github.ref == 'refs/heads/release'
-      uses: actions/create-release@v1
-      id: create_release
-      with:
-        draft: false
-        prerelease: false
-        release_name: ${{ steps.date.outputs.date }}
-        tag_name: ${{ steps.date.outputs.date }}
-        body_path: CHANGELOG.md
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-    - name: Upload artifact to github release
-      if: success() && github.ref == 'refs/heads/release'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/${{ env.build_name }}
-        asset_name: ${{ env.build_name }}
-        asset_content_type: application/gzip
