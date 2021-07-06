@@ -11,18 +11,19 @@ Bool Property EnableSOAS auto
 
 float Property DrainedForce auto
 float Property PassiveDrainModifier = 1.0 auto
-float Property DrainResultModifier = 5.0 auto
+float Property DrainResultModifier = 1.5 auto
 float Property ActiveDrainAmount = 30.0 auto
 float Property ForceRegenRate = 100.0 auto ; Life force regenerated per day
 
 bool Property EnableUncontrolledDrain = true auto
 
-float Property PlayerLifeForce = 50.0 auto
+float Property PlayerLifeForce = 150.0 auto
 float PlayerLifeForceLastCheckTime = 0.0
-float Property PlayerLifeForConstantDrain = 500.0 auto
+float Property PlayerLifeForceConstantDrain = 500.0 auto
 
 
 int Property SweetestTasteKeyCode = 39 auto
+Spell Property SweetestTasteAbility auto
 
 string property LifeForceName = "soas_life_force" auto
 string property LifeForceCheckName = "soas_life_force_check" auto
@@ -31,6 +32,11 @@ Spell property PowerOfLilith auto
 
 Spell property DrainSpell auto
 Spell property SoulDrainAbility auto
+
+
+Spell property VictimDebuff50 auto
+Spell property VictimDebuff25 auto
+Spell property VictimDebuff5 auto
 	
 OsexIntegrationMain ostim 
 OSexBar PlayerForceBar
@@ -90,7 +96,7 @@ endFunction
 Event OnUpdate()
 	float currentTime = Utility.GetCurrentGameTime()	
 	if(PlayerLifeForceLastCheckTime != 0.0)				
-		float drainAmount = PlayerLifeForConstantDrain * (currentTime - PlayerLifeForceLastCheckTime)
+		float drainAmount = PlayerLifeForceConstantDrain * (currentTime - PlayerLifeForceLastCheckTime)
 		if drainAmount > PlayerLifeForce
 			PlayerLifeForce = 0.0
 		else
@@ -160,6 +166,9 @@ endEvent
 
 
 Event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
+	if(GetLifeForce(secondActor) < 5.0)
+		VictimDebuff5.Cast(secondActor)		
+	endif
 	ResetActors()
 	SetBarVisible(PlayerForceBar, false)
 endEvent
@@ -168,7 +177,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 	Actor orgasmer = ostim.GetMostRecentOrgasmedActor()	
 	if(orgasmer == playerref)
 		if(EnableUncontrolledDrain)
-			if(ostim.ChanceRoll(100))
+			if(ostim.ChanceRoll(33))
 				Debug.MessageBox("You're losing control!")
 				PerformUncontrolledDrain()
 			endif
@@ -179,6 +188,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 			PerformSweetestTaste(secondActor)
 		else
 			MiscUtil.PrintConsole("SoaS: Key NOT Pressed ")
+			
 		endif
 	ElseIf(orgasmer == thirdActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
@@ -254,7 +264,7 @@ endFunction
 function PerformSweetestTaste(Actor act)
 	MiscUtil.PrintConsole("SoaS: performing sweetest taste")
 	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5, true)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
-		AbsorbForce(50) ; reward for killing the victim
+		SweetestTasteAbility.Cast(playerref)
 	endif
 endFunction
 
