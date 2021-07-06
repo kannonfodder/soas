@@ -9,8 +9,10 @@
 
 ### Planned
 
-Use your powers to seduce your foes
-Unlock upgrades with your over time
+- v 1.0
+1. Use your powers to seduce your foes - only sex while the target is seduced will count for power draining, but the more power you have drained the harder it will be to seduce.
+- v1.1
+1. Unlock upgrades with your over time - progression system to increase the power of the buffs and seduction spells
 
 ### Dependencies
 
