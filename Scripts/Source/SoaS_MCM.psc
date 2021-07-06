@@ -24,7 +24,7 @@ event OnPageDraw()
     AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag) 
     SetCursorPosition(1)   
     AddHeaderOption("Sweetest Taste")
-    AddKeyMapOptionST("AttemptSweetestKissMap","Toggle Draining Key", 39, _soas_enabled_flag)
+    AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", 39, _soas_enabled_flag)
     AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Activating sweetest taste will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")
 endEvent
 
@@ -52,7 +52,7 @@ state AttemptSweetestKissMap
     endEvent
 
     event OnHighLightST(string state_id)
-        SetInfoText("If held during a victim orgasm, perform the sweetest taste. Potentially fatal.")
+        SetInfoText("If held during a victim orgasm, perform the Sweetest Taste. Potentially fatal.")
     endevent
 
     event OnKeyMapChangeST(string state_id, int keycode)

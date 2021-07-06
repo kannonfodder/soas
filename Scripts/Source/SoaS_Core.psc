@@ -10,8 +10,8 @@ Faction Property forcelevel3Faction Auto
 Bool Property EnableSOAS auto
 
 float Property DrainedForce auto
-float Property PassiveDrainModifier = 1.0 auto
-float Property DrainResultModifier = 1.5 auto
+float Property PassiveDrainModifier = 0.9 auto
+float Property DrainResultModifier = 1.0 auto
 float Property ActiveDrainAmount = 30.0 auto
 float Property ForceRegenRate = 100.0 auto ; Life force regenerated per day
 
@@ -57,7 +57,7 @@ float thirdActorPassiveDrain
 float MaxPlayerLifeForce = 500.0
 
 Event OnInit()
-	Debug.Notification("Setting up SoAS")
+	Debug.Notification("Setting up SoaS")
 	EnableSOAS = true	
 	register()
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
@@ -250,9 +250,6 @@ float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorFor
 	endif
 	return initialForce
 endFunction
-
-
-
 
 function PerformUncontrolledDrain() ; Succubus has lost control: Drain 3x active drain amount from the victim
 	AttemptDeadlyDrain(secondActor, ActiveDrainAmount * 3.0, false) 
