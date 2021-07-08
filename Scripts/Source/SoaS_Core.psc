@@ -7,6 +7,8 @@ Faction Property forcelevel1Faction auto
 Faction Property forcelevel2Faction auto
 Faction Property forcelevel3Faction Auto
 
+Faction Property SeducedFaction Auto
+
 Bool Property EnableSOAS auto
 
 float Property DrainedForce auto
@@ -32,6 +34,7 @@ Spell property PowerOfLilith auto
 
 Spell property DrainSpell auto
 Spell property SoulDrainAbility auto
+Spell property SeductionSpell auto
 
 
 Spell property VictimDebuff50 auto
@@ -55,6 +58,9 @@ float secondActorPassiveDrain
 float thirdActorPassiveDrain
 
 float MaxPlayerLifeForce = 500.0
+
+bool secondActorSeduced = false
+bool thirdActorSeduced = false
 
 Event OnInit()
 	Debug.Notification("Setting up SoaS")
@@ -84,6 +90,7 @@ function register()
 	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")	
 	RegisterForSingleUpdate(3.0)
 	playerref.AddSpell(PowerOfLilith)
+	playerref.AddSpell(SeductionSpell)
 endFunction
 
 function unRegister()
@@ -110,7 +117,13 @@ Event OnUpdate()
 endEvent
 
 Event OstimStartScene(string eventName, string strArg, float numArg, Form sender)
-		
+	;reset
+	secondActor = none
+	secondActorSeduced = false
+	thirdActor = none
+	thirdActorSeduced = false
+
+
 	Actor[] currentActors = ostim.GetActors()
 	bool IsPlayerInvolved = ostim.IsPlayerInvolved()
 	if (IsPlayerInvolved)
@@ -132,7 +145,16 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 			secondActor = currentActors[0]
 			thirdActor = currentActors[1]	
 		endif
-	
+		
+		if(secondActor.IsInFaction(SeducedFaction))
+			secondActorSeduced = true
+		endif
+		if(thirdActor.IsInFaction(SeducedFaction))
+			thirdActorSeduced = true
+		endif
+		if(!secondActorSeduced && !thirdActorSeduced)
+			return
+		endif
 
 		PlayerForceBar.ForcePercent(PlayerLifeForce / MaxPlayerLifeForce)
 		SetBarVisible(PlayerForceBar, true)
@@ -142,7 +164,7 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 		
 		float currentThirdActorForce = 0.0
 
-		if(thirdActor != None)
+		if(thirdActor != None && thirdActorSeduced)
 			thirdActorInitialForce = StartPassiveDrain(thirdActor, ThirdActorForcebar)
 			currentThirdActorForce = thirdActorInitialForce
 		endif		
@@ -152,13 +174,14 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 		While (ostim.animationRunning())
 			Utility.Wait(1)
 			if (drainActive)
-				currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
-				if(thirdActor != None)
+				if(secondActorSeduced)
+					currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
+				endif
+				if(thirdActor != None && thirdActorSeduced)
 					currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar)
 				endif
 			endif
 		EndWhile
-
 	endif
 		
 endEvent
@@ -182,7 +205,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 				PerformUncontrolledDrain()
 			endif
 		endif		
-	Elseif(orgasmer == secondActor)
+	Elseif(orgasmer == secondActor && secondActorSeduced)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
 			MiscUtil.PrintConsole("SoaS: Key Pressed - performing sweetest taste")
 			PerformSweetestTaste(secondActor)
@@ -190,7 +213,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 			MiscUtil.PrintConsole("SoaS: Key NOT Pressed ")
 			
 		endif
-	ElseIf(orgasmer == thirdActor)
+	ElseIf(orgasmer == thirdActor && thirdActorSeduced)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
 			PerformSweetestTaste(thirdActor)
 		endif		

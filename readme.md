@@ -6,11 +6,12 @@
 - Choose whether or not to kill your victim on orgasm and unlock near invulnerability
 - Victim life force regenerates over a day, so come back to your favourite feeding spot to top up
 - Don't let your own life force drop too low or you'll suffer penalties
+- Seduce your victim with a spell to initiate sex and start draining their life force
 
 ### Planned
 
 - v 1.0
-1. Use your powers to seduce your foes - only sex while the target is seduced will count for power draining, but the more power you have drained the harder it will be to seduce.
+1. Modify Seduce spell so it has a chance of failure on higher force levels
 - v1.1
 1. Unlock upgrades with your over time - progression system to increase the power of the buffs and seduction spells
 
