@@ -19,5 +19,7 @@
 
 * Skyrim: Special Edition (1.5.39+)
 
+* [nl_mcm](https://github.com/MrOctopus/nl_mcm)
+
 
 * [Ostim](https://github.com/Sairion350/OStim)
