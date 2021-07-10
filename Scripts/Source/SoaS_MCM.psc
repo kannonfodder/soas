@@ -20,8 +20,10 @@ event OnPageDraw()
         _soas_enabled_flag = OPTION_FLAG_DISABLED
     endif
     SetCursorFillMode(TOP_TO_BOTTOM)
+    AddHeaderOption("Core Features")
     AddToggleOptionST("ModEnabledState", "Enable SoaS", core.EnableSOAS)
     AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag) 
+    AddToggleOptionST("DisableEssentialFlagsToggle", "Disable Essential Flags", core.DisableEssentialFlags, _soas_enabled_flag)
     SetCursorPosition(1)   
     AddHeaderOption("Sweetest Taste")
     AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", 39, _soas_enabled_flag)
@@ -77,3 +79,18 @@ state EnableUncontrolledDrain
         SetInfoText("Enable uncontrolled drain chance on player orgasm. Warning this may be fatal to victim")
     endevent
 endstate
+
+state DisableEssentialFlagsToggle
+    event OnDefaultST(string state_id)
+        SetToggleOptionValueST(core.DisableEssentialFlags)
+    endEvent
+
+    event OnSelectST(string state_id)
+        core.DisableEssentialFlags = !core.DisableEssentialFlags
+        SetToggleOptionValueST(core.DisableEssentialFlags)
+    endEvent
+
+    event OnHighlightST(string state_id)
+        SetInfoText("Disable any essential flags on vicitms and allow their death. Warning! This will break quests. Use at your own risk.")
+    endEvent
+endState

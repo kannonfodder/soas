@@ -18,6 +18,7 @@ float Property ActiveDrainAmount = 30.0 auto
 float Property ForceRegenRate = 100.0 auto ; Life force regenerated per day
 
 bool Property EnableUncontrolledDrain = true auto
+bool property DisableEssentialFlags = false auto
 
 float Property PlayerLifeForce = 150.0 auto
 float PlayerLifeForceLastCheckTime = 0.0
@@ -294,6 +295,11 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 	if (currentForce < amountToDrain)
 		AbsorbForce(currentForce)
 		MiscUtil.PrintConsole("SoaS: Doing Deadly Drain")
+		if(DisableEssentialFlags)
+			ActorBase actBase = act.GetActorBase()
+			actBase.SetEssential(false)
+			actBase.SetProtected(false)
+		endif
 		if(controlled)
 			act.AddSpell(SoulDrainAbility)
 		endif
@@ -441,4 +447,3 @@ endFunction
 function SetLifeForce(Actor act, float amount)
 	StorageUtil.SetFloatValue(act as form, LifeForceName, amount)
 endFunction
-
