@@ -22,7 +22,7 @@ bool property DisableEssentialFlags = false auto
 
 float Property PlayerLifeForce = 150.0 auto
 float PlayerLifeForceLastCheckTime = 0.0
-float Property PlayerLifeForceConstantDrain = 500.0 auto
+float Property PlayerLifeForceConstantDrain = 100.0 auto
 
 
 int Property SweetestTasteKeyCode = 39 auto
@@ -63,58 +63,77 @@ float MaxPlayerLifeForce = 500.0
 bool secondActorSeduced = false
 bool thirdActorSeduced = false
 
+bool property InSeducedScene = false auto
+
 Event OnInit()
 	Debug.Notification("Setting up SoaS")
-	EnableSOAS = true	
-	register()
+	playerref.AddItem(game.GetFormFromFile(0x0522F4,"SoaS.esp"))	
+	SetupRefs()
+endEvent
+
+Event OnPlayerLoadGame()
+	SetupRefs()
+endEvent
+
+function SetupRefs()
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
 	
 	PlayerForceBar = (Self as Quest) as OSexBar
 	InitPlayerForceBar()
 	InitVictimForceBar(SecondActorForceBar, 0)
 	InitVictimForceBar(ThirdActorForceBar, 1)
-endEvent
+endFunction
 
-function toggleRegister()
-	EnableSOAS = !EnableSOAS
+function toggleRegister()	
 	if (EnableSOAS)
-		register()
+		unRegister()		
 	else
-		unRegister()
+		register()
 	endif
 
 endFunction
 
 function register()
+	EnableSOAS = true
 	RegisterForModEvent("ostim_start","OstimStartScene")
 	RegisterForModEvent("ostim_end","OStimEndScene")
 	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")	
-	RegisterForSingleUpdate(3.0)
+	RegisterForModEvent("ostim_animationchanged","OstimAnimationChanged")
+	RegisterForSingleUpdate(10.0)
 	playerref.AddSpell(PowerOfLilith)
 	playerref.AddSpell(SeductionSpell)
 endFunction
 
 function unRegister()
+	EnableSOAS = false
 	UnregisterForModEvent("ostim_start")
 	UnregisterForModEvent("ostim_end")
 	UnregisterForModEvent("ostim_orgasm")		
 	playerref.RemoveSpell(PowerOfLilith)
+	playerref.RemoveSpell(SeductionSpell)
+	playerref.RemoveFromFaction(forcelevel0Faction)
+	playerref.RemoveFromFaction(forcelevel1Faction)
+	playerref.RemoveFromFaction(forcelevel2Faction)
+	playerref.RemoveFromFaction(forcelevel3Faction)
+	UnregisterForUpdate()
 endFunction
 
 Event OnUpdate()
-	float currentTime = Utility.GetCurrentGameTime()	
-	if(PlayerLifeForceLastCheckTime != 0.0)				
-		float drainAmount = PlayerLifeForceConstantDrain * (currentTime - PlayerLifeForceLastCheckTime)
-		if drainAmount > PlayerLifeForce
-			PlayerLifeForce = 0.0
-		else
-			PlayerLifeForce -= drainAmount
-		endif		
-	endif	
-	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
-	CalculateLilethChanges()
-	PlayerLifeForceLastCheckTime = currentTime
-	RegisterForSingleUpdate(3.0)
+	if(EnableSOAS)
+		float currentTime = Utility.GetCurrentGameTime()	
+		if(PlayerLifeForceLastCheckTime != 0.0)				
+			float drainAmount = PlayerLifeForceConstantDrain * (currentTime - PlayerLifeForceLastCheckTime)
+			if drainAmount > PlayerLifeForce
+				PlayerLifeForce = 0.0
+			else
+				PlayerLifeForce -= drainAmount
+			endif		
+		endif	
+		PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
+		CalculateLilethChanges()
+		PlayerLifeForceLastCheckTime = currentTime
+		RegisterForSingleUpdate(10.0)
+	endif
 endEvent
 
 Event OstimStartScene(string eventName, string strArg, float numArg, Form sender)
@@ -124,7 +143,6 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 	thirdActor = none
 	thirdActorSeduced = false
 
-
 	Actor[] currentActors = ostim.GetActors()
 	bool IsPlayerInvolved = ostim.IsPlayerInvolved()
 	if (IsPlayerInvolved)
@@ -133,7 +151,7 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 		endif
 		
 		if (currentActors[0] == playerref)
-			secondActor = currentActors[1]
+			secondActor = currentActors[1]			
 			if(currentActors.Length == 3)
 				thirdActor = currentActors[2]
 			endif
@@ -145,26 +163,29 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 		elseif (currentActors.Length == 3 && currentActors[2] == playerref)
 			secondActor = currentActors[0]
 			thirdActor = currentActors[1]	
-		endif
+		endif	
 		
 		if(secondActor.IsInFaction(SeducedFaction))
 			secondActorSeduced = true
 		endif
-		if(thirdActor.IsInFaction(SeducedFaction))
+		if(thirdActor && thirdActor.IsInFaction(SeducedFaction))
 			thirdActorSeduced = true
 		endif
 		if(!secondActorSeduced && !thirdActorSeduced)
 			return
+		Else
+			InSeducedScene = true
 		endif
 
 		PlayerForceBar.ForcePercent(PlayerLifeForce / MaxPlayerLifeForce)
 		SetBarVisible(PlayerForceBar, true)
-
-		secondActorInitialForce = StartPassiveDrain(secondActor, SecondActorForceBar)
-		float currentSecondActorForce = secondActorInitialForce
-		
+		float currentSecondActorForce = 0.0
 		float currentThirdActorForce = 0.0
 
+		if(secondActorSeduced)
+			secondActorInitialForce = StartPassiveDrain(secondActor, SecondActorForceBar)
+			currentSecondActorForce = secondActorInitialForce
+		endif
 		if(thirdActor != None && thirdActorSeduced)
 			thirdActorInitialForce = StartPassiveDrain(thirdActor, ThirdActorForcebar)
 			currentThirdActorForce = thirdActorInitialForce
@@ -195,6 +216,13 @@ Event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 	endif
 	ResetActors()
 	SetBarVisible(PlayerForceBar, false)
+	InSeducedScene = false
+	secondActor.DispelSpell(SeductionSpell)
+	thirdActor.DispelSpell(SeductionSpell)
+endEvent
+
+Event OstimAnimationChanged(string eventName, string strArg, float numArg, Form sender)
+	MiscUtil.PrintConsole("Ostim animation changed")
 endEvent
 
 event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
@@ -333,8 +361,8 @@ endFunction
 
 function CalculateLilethChanges()
 	float level1Limit = 100.0
-	float level2Limit = 250.0
-	float level3Limit = 450.0
+	float level2Limit = 400.0
+	float level3Limit = 490.0
 
 	if(PlayerLifeForce < level1Limit)
 		if(!playerref.IsInFaction(forcelevel0Faction))
@@ -446,4 +474,11 @@ endFunction
 
 function SetLifeForce(Actor act, float amount)
 	StorageUtil.SetFloatValue(act as form, LifeForceName, amount)
+endFunction
+
+
+function ShowPlayerForceBar()
+	SetBarVisible(PlayerForceBar, true)
+	Utility.Wait(5)
+	SetBarVisible(PlayerForceBar, false)
 endFunction
