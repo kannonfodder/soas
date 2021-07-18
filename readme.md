@@ -11,10 +11,7 @@
 
 ### Planned
 
-- v 1.0
-1. Modify Seduce spell so it has a chance of failure on higher force levels
-- v1.1
-1. Unlock upgrades with your over time - progression system to increase the power of the buffs and seduction spells
+Head to the [Project Board](https://github.com/kannonfodder/soas/projects/1) to see planned and inprogress features
 
 ### Dependencies
 
