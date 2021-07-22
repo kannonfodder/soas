@@ -16,7 +16,7 @@ Event OnEffectStart(Actor target, Actor Caster)
     target.AddToFaction(SeducedFaction)
     ActorUtil.AddPackageOverride(target, FollowPlayer)
     target.EvaluatePackage()
-    SceneStarter.StartSceneDelay(target)
+    SceneStarter.StartSceneProximity(target)
 endEvent
 
 Event OnEffectFinish(Actor target, Actor Caster)

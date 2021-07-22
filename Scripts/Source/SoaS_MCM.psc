@@ -33,12 +33,12 @@ endEvent
 
 state ModEnabledState
     event OnDefaultST(string state_id)
-        core.toggleRegister()
+        core.ToggleEnableMod()
         SetToggleOptionValueST(core.EnableSOAS)
     endevent
 
     event OnSelectST(string state_id)
-        core.toggleRegister()
+        core.ToggleEnableMod()
         ForcePageReset()
     endevent
 

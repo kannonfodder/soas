@@ -4,7 +4,7 @@ SoaS_Core property core auto
 
 event OnEffectStart(Actor akTarget, Actor akCaster)
     if(akTarget == Game.GetPlayer())
-        core.UnRegister()
+        core.DisableMod()
         Debug.Notification("You feel Lilith's power, and curse, lift from you")
     endif
 endEvent

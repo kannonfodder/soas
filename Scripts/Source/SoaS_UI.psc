@@ -1,15 +1,35 @@
-ScriptName SoaS_UI extends Quest
+Scriptname SoaS_UI extends Quest
 
-SoaS_Core property core auto
+float Property Version auto
 
-event OnInit()
-    ;RegisterForKey(39)
+SoaS_Core core
+
+Event OnInit()
+    Maintenance()
 endEvent
 
-event onKeyDown(int keyCode)    
-    if(keyCode == core.SweetestTasteKeyCode)
-        if (core.InSeducedScene == false)
-            core.ShowPlayerForceBar()
-        endif
-    endif    
+
+function Maintenance()
+    if(Version < 0.3)
+        SetupRefs()
+        Version = 0.3
+    endIf
+    RegisterForKey(56) ; alt
+    RegisterForKey(core.SweetestTasteKeyCode)
+endFunction
+
+function SetupRefs()
+    core = game.GetFormFromFile(0x000806,"SoaS.esp") as SoaS_Core
+endFunction
+
+event OnKeyDown(int keycode)
+    if (Utility.IsInMenuMode() || UI.IsMenuOpen("console"))
+        return
+    endIf
+    if(Input.IsKeyPressed(56))
+        if(keycode == core.SweetestTasteKeyCode)
+            core.ShowPlayerForceBar()            
+            MiscUtil.PrintConsole("SoaS: PlayerForce: " + core.PlayerLifeForce)
+        endIf
+    endIf
 endEvent
