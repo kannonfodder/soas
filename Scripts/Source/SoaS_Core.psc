@@ -78,9 +78,9 @@ event OnInit()
 endEvent
 
 function Maintenance()
-	if(Version < 0.3)
+	if(Version < 0.4)
 		SetupRefs()
-		Version = 0.3
+		Version = 0.4
 	endif
 	if(EnableSOAS)
 		RegisterForModEvents()
