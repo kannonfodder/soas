@@ -50,13 +50,17 @@ OSexBar Property ThirdActorForceBar auto
 Actor secondActor = none
 Actor thirdActor = none
 
-bool property drainActive = true auto
+bool property DrainActive = true auto
 
 float secondActorInitialForce
 float thirdActorInitialForce
 
 float secondActorPassiveDrain
 float thirdActorPassiveDrain
+
+float level1Limit = 100.0
+float level2Limit = 400.0
+float level3Limit = 490.0
 
 float MaxPlayerLifeForce = 500.0
 
@@ -65,15 +69,23 @@ bool thirdActorSeduced = false
 
 bool property InSeducedScene = false auto
 
-Event OnInit()
+float property Version auto
+
+event OnInit()
 	Debug.Notification("Setting up SoaS")
 	playerref.AddItem(game.GetFormFromFile(0x0522F4,"SoaS.esp"))	
 	SetupRefs()
 endEvent
 
-Event OnPlayerLoadGame()
-	SetupRefs()
-endEvent
+function Maintenance()
+	if(Version < 0.3)
+		SetupRefs()
+		Version = 0.3
+	endif
+	if(EnableSOAS)
+		RegisterForModEvents()
+	endIf
+endFunction
 
 function SetupRefs()
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
@@ -84,31 +96,38 @@ function SetupRefs()
 	InitVictimForceBar(ThirdActorForceBar, 1)
 endFunction
 
-function toggleRegister()	
+function ToggleEnableMod()
 	if (EnableSOAS)
-		unRegister()		
+		DisableMod()		
 	else
-		register()
+		EnableMod()
 	endif
 
 endFunction
 
-function register()
+function EnableMod()
 	EnableSOAS = true
-	RegisterForModEvent("ostim_start","OstimStartScene")
-	RegisterForModEvent("ostim_end","OStimEndScene")
-	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")	
-	RegisterForModEvent("ostim_animationchanged","OstimAnimationChanged")
-	RegisterForSingleUpdate(10.0)
+	RegisterForModEvents()
 	playerref.AddSpell(PowerOfLilith)
 	playerref.AddSpell(SeductionSpell)
+	RegisterForSingleUpdate(3.0)
 endFunction
 
-function unRegister()
-	EnableSOAS = false
+function RegisterForModEvents()
+	RegisterForModEvent("ostim_start", "OstimStartScene")
+	RegisterForModEvent("ostim_end", "OStimEndScene")
+	RegisterForModEvent("ostim_orgasm", "OstimOrgasm")
+endFunction
+
+function UnRegisterForModEvents()
 	UnregisterForModEvent("ostim_start")
 	UnregisterForModEvent("ostim_end")
-	UnregisterForModEvent("ostim_orgasm")		
+	UnregisterForModEvent("ostim_orgasm")	
+endFunction
+
+function DisableMod()
+	EnableSOAS = false
+	UnRegisterForModEvents()	
 	playerref.RemoveSpell(PowerOfLilith)
 	playerref.RemoveSpell(SeductionSpell)
 	playerref.RemoveFromFaction(forcelevel0Faction)
@@ -118,7 +137,7 @@ function unRegister()
 	UnregisterForUpdate()
 endFunction
 
-Event OnUpdate()
+event OnUpdate()
 	if(EnableSOAS)
 		float currentTime = Utility.GetCurrentGameTime()	
 		if(PlayerLifeForceLastCheckTime != 0.0)				
@@ -132,16 +151,12 @@ Event OnUpdate()
 		PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
 		CalculateLilethChanges()
 		PlayerLifeForceLastCheckTime = currentTime
-		RegisterForSingleUpdate(10.0)
+		RegisterForSingleUpdate(3.0)
 	endif
 endEvent
 
-Event OstimStartScene(string eventName, string strArg, float numArg, Form sender)
-	;reset
-	secondActor = none
-	secondActorSeduced = false
-	thirdActor = none
-	thirdActorSeduced = false
+event OstimStartScene(string eventName, string strArg, float numArg, Form sender)	
+	ResetActors()
 
 	Actor[] currentActors = ostim.GetActors()
 	bool IsPlayerInvolved = ostim.IsPlayerInvolved()
@@ -195,7 +210,7 @@ Event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 
 		While (ostim.animationRunning())
 			Utility.Wait(1)
-			if (drainActive)
+			if (DrainActive)
 				if(secondActorSeduced)
 					currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
 				endif
@@ -210,7 +225,7 @@ endEvent
 
 
 
-Event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
+event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 	if(GetLifeForce(secondActor) < 5.0)
 		VictimDebuff5.Cast(secondActor)		
 	endif
@@ -218,11 +233,9 @@ Event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 	SetBarVisible(PlayerForceBar, false)
 	InSeducedScene = false
 	secondActor.DispelSpell(SeductionSpell)
-	thirdActor.DispelSpell(SeductionSpell)
-endEvent
-
-Event OstimAnimationChanged(string eventName, string strArg, float numArg, Form sender)
-	MiscUtil.PrintConsole("Ostim animation changed")
+	if(thirdActor)
+		thirdActor.DispelSpell(SeductionSpell)
+	endif
 endEvent
 
 event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
@@ -254,7 +267,9 @@ function ResetActors()
 	SetBarVisible(ThirdActorForceBar, false)
 
 	secondActor = None
+	secondActorSeduced = false
 	thirdActor = None
+	thirdActorSeduced = false
 
 	secondActorPassiveDrain = 0.0
 	thirdActorPassiveDrain = 0.0
@@ -313,7 +328,8 @@ endFunction
 function PerformSweetestTaste(Actor act)
 	MiscUtil.PrintConsole("SoaS: performing sweetest taste")
 	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5, true)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
-		SweetestTasteAbility.Cast(playerref)
+		AbsorbForce(25, true) ; free force, should push level 0 -> level 1		
+		SweetestTasteAbility.Cast(playerref) ; Only applies buffs if within the corect faction (Spell/ME condition controlled)
 	endif
 endFunction
 
@@ -328,9 +344,6 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 			actBase.SetEssential(false)
 			actBase.SetProtected(false)
 		endif
-		if(controlled)
-			act.AddSpell(SoulDrainAbility)
-		endif
 		ostim.EndAnimation()
 		Utility.Wait(0.5)
 		DrainSpell.RemoteCast(playerref, playerref, act)
@@ -343,13 +356,17 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 	
 endFunction
 
-function AbsorbForce(float amount)
+function AbsorbForce(float amount, bool ignoreLevelLimit = false)
 	float absorbValue = amount * DrainResultModifier
 	DrainedForce += absorbValue
-	if(PlayerLifeForce + absorbValue < MaxPlayerLifeForce)
-		PlayerLifeForce += absorbValue
-	Else
-		PlayerLifeForce = MaxPlayerLifeForce
+	if(!ignoreLevelLimit && playerRef.IsInFaction(forcelevel0Faction) && PlayerLifeForce + absorbValue > level1Limit)
+		PlayerLifeForce = level1Limit
+	else
+		if(PlayerLifeForce + absorbValue > MaxPlayerLifeForce)
+			PlayerLifeForce = MaxPlayerLifeForce
+		Else
+			PlayerLifeForce += absorbValue
+		endif
 	endif
 	
 	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
@@ -359,14 +376,13 @@ function AbsorbForce(float amount)
 	;MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
 endFunction
 
-function CalculateLilethChanges()
-	float level1Limit = 100.0
-	float level2Limit = 400.0
-	float level3Limit = 490.0
+function CalculateLilethChanges(bool silent = false)
 
-	if(PlayerLifeForce < level1Limit)
+	string notificationMessage = ""
+	if(PlayerLifeForce <= level1Limit)
 		if(!playerref.IsInFaction(forcelevel0Faction))
-			Debug.Notification("I feel all my strength leaving me")
+			
+			notificationMessage = "I feel all my strength leaving me, I know I need to kill to regain it"
 
 			playerref.AddToFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
@@ -374,40 +390,43 @@ function CalculateLilethChanges()
 			playerref.RemoveFromFaction(forcelevel3Faction)
 			
 		endif
-	elseif(PlayerLifeForce >= level1Limit && PlayerLifeForce < level2Limit)		
+	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level2Limit)		
 		if(!playerref.IsInFaction(forcelevel1Faction))
 			if playerref.IsInFaction(forcelevel0Faction)
-				Debug.Notification("I'm feeling normal again, I should feed more to gain more power")
+				notificationMessage = "I'm feeling normal again, I should feed more to gain more power"
 			else	
-				Debug.Notification("I feel my power slipping. I no longer feel Lilith's power")
+				notificationMessage = "I feel my power slipping. I no longer feel Lilith's power"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.AddToFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
 		endif
-	elseif(PlayerLifeForce >= level2Limit && PlayerLifeForce < level3Limit)	
+	elseif(PlayerLifeForce > level2Limit && PlayerLifeForce <= level3Limit)	
 		if(!playerref.IsInFaction(forcelevel2Faction))
 			if playerref.IsInFaction(forcelevel0Faction) || playerref.IsInFaction(forcelevel1Faction)
-				Debug.Notification("Ultimate power is almost mine, I can taste it!")
+				notificationMessage = "Ultimate power is almost mine, I can taste it!"
 			else	
-				Debug.Notification("I've lost my ultimate power, but I can get it back")
+				notificationMessage = "I've lost my ultimate power, but I can get it back"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.AddToFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
 		endif
-	elseif(PlayerLifeForce >= level3Limit)		
+	elseif(PlayerLifeForce > level3Limit)		
 		if(!playerref.IsInFaction(forcelevel3Faction))
 			if playerref.IsInFaction(forcelevel2Faction) || playerref.IsInFaction(forcelevel1Faction) || playerref.IsInFaction(forcelevel2Faction)
-				Debug.Notification("This is what true power feels like!")
+				notificationMessage = "This is what true power feels like!"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.AddToFaction(forcelevel3Faction)
 		endif
+	endif
+	if(!silent)
+		Debug.Notification(notificationMessage)
 	endif
 endFunction
 
