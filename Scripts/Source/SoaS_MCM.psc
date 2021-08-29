@@ -27,7 +27,7 @@ event OnPageDraw()
     SetCursorPosition(1)   
     AddHeaderOption("Sweetest Taste")
     AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", 39, _soas_enabled_flag)
-    AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Activating sweetest taste will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")
+    AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Activating sweetest taste at the point of orgasm will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")
 endEvent
 
 

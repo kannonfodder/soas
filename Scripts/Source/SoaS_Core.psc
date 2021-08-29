@@ -149,7 +149,7 @@ event OnUpdate()
 			endif		
 		endif	
 		PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
-		CalculateLilethChanges()
+		CalculateLilithChanges()
 		PlayerLifeForceLastCheckTime = currentTime
 		RegisterForSingleUpdate(3.0)
 	endif
@@ -371,12 +371,12 @@ function AbsorbForce(float amount, bool ignoreLevelLimit = false)
 	
 	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
 
-	CalculateLilethChanges()
+	CalculateLilithChanges()
 		
 	;MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
 endFunction
 
-function CalculateLilethChanges(bool silent = false)
+function CalculateLilithChanges(bool silent = false)
 
 	string notificationMessage = ""
 	if(PlayerLifeForce <= level1Limit)
@@ -395,7 +395,7 @@ function CalculateLilethChanges(bool silent = false)
 			if playerref.IsInFaction(forcelevel0Faction)
 				notificationMessage = "I'm feeling normal again, I should feed more to gain more power"
 			else	
-				notificationMessage = "I feel my power slipping. I no longer feel Lilith's power"
+				notificationMessage = "I don't feel Lilith's boon. I must kill more to attain her power"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.AddToFaction(forcelevel1Faction)
