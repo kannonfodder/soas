@@ -73,7 +73,6 @@ float property Version auto
 
 event OnInit()
 	Debug.Notification("Setting up SoaS")
-	playerref.AddItem(game.GetFormFromFile(0x0522F4,"SoaS.esp"))	
 	SetupRefs()
 endEvent
 
