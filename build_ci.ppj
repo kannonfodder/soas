@@ -30,7 +30,7 @@
         <Folder>@MyProject\Scripts\Source</Folder>
     </Folders>
   <Packages Output="@MyProject">
-    <Package Name="@ModName" RootDir="@MyProject">
+    <Package Name="SoaS" RootDir="@MyProject">
     <Include>**/scripts/*.pex</Include>
     <Include>**/scripts/source/*.psc</Include>
     </Package>
@@ -40,8 +40,6 @@
         <ZipFile Name="@ModName" RootDir="@MyProject" Compression="deflate">
         	<Include NoRecurse="true">*.esp</Include>
 	        <Include NoRecurse="true">*.bsa</Include>
-	        <Include NoRecurse="true">*/*.pex</Include>
-	        <Include NoRecurse="true">*/*/*.psc</Include>
         </ZipFile>
     </ZipFiles>
 </PapyrusProject>
