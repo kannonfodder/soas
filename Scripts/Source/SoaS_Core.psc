@@ -500,3 +500,5 @@ function ShowPlayerForceBar()
 	Utility.Wait(5)
 	SetBarVisible(PlayerForceBar, false)
 endFunction
+
+
