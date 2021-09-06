@@ -4,4 +4,3 @@ meta.ini
 dist/
 *.pex
 *.bsa
-Scripts/*.pex

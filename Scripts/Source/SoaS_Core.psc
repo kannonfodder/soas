@@ -226,15 +226,15 @@ endEvent
 
 event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 	if(GetLifeForce(secondActor) < 5.0)
-		VictimDebuff5.Cast(secondActor)		
+		;VictimDebuff5.Cast(secondActor)		
 	endif
-	ResetActors()
 	SetBarVisible(PlayerForceBar, false)
 	InSeducedScene = false
 	secondActor.DispelSpell(SeductionSpell)
 	if(thirdActor)
 		thirdActor.DispelSpell(SeductionSpell)
 	endif
+	ResetActors()
 endEvent
 
 event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)

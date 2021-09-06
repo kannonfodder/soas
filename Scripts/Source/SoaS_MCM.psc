@@ -58,7 +58,6 @@ state AttemptSweetestKissMap
         core.SweetestTasteKeyCode = 39 ;
         soasui.RegisterForKey(39)
         SetKeyMapOptionValueST(39)
-        RegisterForKey(39)
     endEvent
 
     event OnHighLightST(string state_id)

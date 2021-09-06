@@ -9,8 +9,14 @@ int originalRelationshipRank = 0
 
 Event OnEffectStart(Actor target, Actor Caster)
     if(target.IsDead())
+        Dispel()
         return
     endif
+    if(!SceneStarter.CanSeduceMore())
+        Dispel()
+        return
+    endif
+    
     originalRelationshipRank = target.GetRelationshipRank(playerRef)
     target.SetRelationshipRank(playerRef, 3)
     target.AddToFaction(SeducedFaction)

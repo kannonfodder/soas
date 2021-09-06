@@ -18,6 +18,10 @@ function StartSceneProximity(Actor target)
     endif
 endFunction
 
+bool function CanSeduceMore()
+    return target1 == none || target2 == none
+endFunction
+
 bool function SetupTarget(Actor target)
     if(target == target1 || target == target2)
         return false
@@ -36,10 +40,6 @@ endFunction
 event onUpdate()
     if(mode == 0)    
         if (target1 && playerRef.GetDistance(target1) > startDistance || (target2 && playerRef.GetDistance(target2) > startDistance))
-            MiscUtil.PrintConsole( target1.GetDisplayName() + " is " + playerRef.GetDistance(target1) + " from player")
-            if(target2)
-                MiscUtil.PrintConsole( target2.GetDisplayName() + " is " + playerRef.GetDistance(target1) + " from player")
-            endif
             RegisterForSingleUpdate(1)
             return
         endif
