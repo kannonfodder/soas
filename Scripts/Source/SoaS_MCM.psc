@@ -1,14 +1,15 @@
 Scriptname SoaS_MCM extends nl_mcm_module
 
-SoaS_Core core
-SoaS_UI soasui
+SoaS_Core property core auto
+SoaS_UI property soasui auto
 
 int _soas_enabled_flag
+int _tfc_installed_flag
+
+string[] tfcMenuEntries
 
 event OnInit()
     RegisterModule("Configuration")
-    core = game.GetFormFromFile(0x000806,"SoaS.esp") as SoaS_Core
-    soasui = game.GetFormFromFile(0x000824,"SoaS.esp") as SoaS_UI
 endEvent
 
 Event OnPageInit()
@@ -17,16 +18,25 @@ Event OnPageInit()
 endEvent
 
 event OnPageDraw()
+    SetupTFCMenu()
     if(core.EnableSOAS)
         _soas_enabled_flag = OPTION_FLAG_NONE
     Else
         _soas_enabled_flag = OPTION_FLAG_DISABLED
+    endif
+    if(core.tfcInstalled)
+        _tfc_installed_flag = OPTION_FLAG_NONE
+    else
+        _tfc_installed_flag = OPTION_FLAG_DISABLED
     endif
     SetCursorFillMode(TOP_TO_BOTTOM)
     AddHeaderOption("Core Features")
     AddToggleOptionST("ModEnabledState", "Enable SoaS", core.EnableSOAS)
     AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag) 
     AddToggleOptionST("DisableEssentialFlagsToggle", "Disable Essential Flags", core.DisableEssentialFlags, _soas_enabled_flag)    
+    AddHeaderOption("TFC Integration")
+    AddToggleOptionST("TFCDetected","TFC Detected", core.tfcInstalled, OPTION_FLAG_DISABLED)
+    AddMenuOptionST("TFCFormSelect", "TFC Cursed Form", tfcMenuEntries[core.tfcCurseFormId], _tfc_installed_flag)
     SetCursorPosition(1)
     AddHeaderOption("Sweetest Taste")
     AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", core.SweetestTasteKeyCode, _soas_enabled_flag)
@@ -34,6 +44,14 @@ event OnPageDraw()
     AddKeyMapOptionST("UIModifierKeyMap", "Ui key", soasui.UI_Modifier, _soas_enabled_flag)
 endEvent
 
+function SetupTFCMenu()
+    int i = 0
+    while (i < 16)
+        tfcMenuEntries[i] = "Curse Form " + (i + 1)
+        i += 1
+
+    endWhile    
+endFunction
 
 state ModEnabledState
     event OnDefaultST(string state_id)
@@ -124,4 +142,42 @@ state DisableEssentialFlagsToggle
     event OnHighlightST(string state_id)
         SetInfoText("Disable any essential flags on vicitms and allow their death. Warning! This will break quests. Use at your own risk.")
     endEvent
+endState
+
+;;;;;;;;;;;;;;;;;;;
+; TFC Integration ;
+;;;;;;;;;;;;;;;;;;;
+
+state TFCDetected
+    event OnDefaultST(string state_id)
+    endEvent
+
+    event OnSelectST(string state_id)
+    endEvent
+
+    event OnHighLightST(string state_id)
+        SetInfoText("Detects if True Form Curse is installed. If so you will transform into the Cursed Form Set below when your life force gets too low")
+    endEvent
+endState
+
+state TFCFormSelect
+    event OnMenuOpenST(string state_id)
+		SetMenuDialogStartIndex(core.tfcCurseFormId - 1)
+		SetMenuDialogDefaultIndex(0)
+		SetMenuDialogOptions(tfcMenuEntries)
+	endEvent
+
+	event OnMenuAcceptST(string state_id, int index)
+		core.tfcCurseFormId = index + 1
+		SetMenuOptionValueST(tfcMenuEntries[index])
+	endEvent
+
+	event OnDefaultST(string state_id)
+		core.tfcCurseFormId = 1
+		SetMenuOptionValueST(tfcMenuEntries[0])
+	endEvent
+
+	event OnHighlightST(string state_id)
+		SetInfoText("Which cursed form to use if tfc is enabled")
+	endEvent
 endState

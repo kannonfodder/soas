@@ -71,15 +71,29 @@ bool property InSeducedScene = false auto
 
 float property Version auto
 
+;;;;;;;;;;;;;;;;;;;
+; TFC Integration ;
+;;;;;;;;;;;;;;;;;;;
+
+bool property tfcInstalled = false auto
+int property tfcCurseFormId = 1 auto
+
 event OnInit()
 	Debug.Notification("Setting up SoaS")
-	SetupRefs()
+	Maintenance()
 endEvent
 
 function Maintenance()
 	if(Version < 0.4)
 		SetupRefs()
 		Version = 0.4
+	endif
+	if(Version < 1.03)		
+		tfcInstalled = game.GetFormFromFile(0x0000801, "TrueFormCurse.esp") != none	
+		if(tfcInstalled)
+			Debug.Notification("Soas: True form curse installed")
+		endif
+		Version = 1.03
 	endif
 	if(EnableSOAS)
 		RegisterForModEvents()
@@ -88,7 +102,6 @@ endFunction
 
 function SetupRefs()
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
-	
 	PlayerForceBar = (Self as Quest) as OSexBar
 	InitPlayerForceBar()
 	InitVictimForceBar(SecondActorForceBar, 0)
@@ -343,7 +356,7 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 			actBase.SetEssential(false)
 			actBase.SetProtected(false)
 		endif
-		ostim.EndAnimation()
+		;ostim.EndAnimation()
 		Utility.Wait(0.5)
 		DrainSpell.RemoteCast(playerref, playerref, act)
 		return true
@@ -387,7 +400,7 @@ function CalculateLilithChanges(bool silent = false)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
-			
+			TurnToCursedForm()
 		endif
 	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level2Limit)		
 		if(!playerref.IsInFaction(forcelevel1Faction))
@@ -400,6 +413,7 @@ function CalculateLilithChanges(bool silent = false)
 			playerref.AddToFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level2Limit && PlayerLifeForce <= level3Limit)	
 		if(!playerref.IsInFaction(forcelevel2Faction))
@@ -412,6 +426,7 @@ function CalculateLilithChanges(bool silent = false)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.AddToFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level3Limit)		
 		if(!playerref.IsInFaction(forcelevel3Faction))
@@ -422,6 +437,7 @@ function CalculateLilithChanges(bool silent = false)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.AddToFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	endif
 	if(!silent)
@@ -501,4 +517,25 @@ function ShowPlayerForceBar()
 	SetBarVisible(PlayerForceBar, false)
 endFunction
 
+;;;;;;;;;;;;;;;;;;;
+; TFC Integration ;
+;;;;;;;;;;;;;;;;;;;
 
+function TurnToCursedForm()
+	if(!tfcInstalled)
+		return
+	endif
+	int handle  = ModEvent.Create("TFCForceTurnIntoForm")
+	if(handle)
+		ModEvent.PushInt(handle, tfcCurseFormId)
+		ModEvent.Send(handle)
+	endif	
+endfunction
+
+function TurnToTrueForm()
+	if(!tfcInstalled)
+		return
+	endif
+	SendModEvent("TFCTurnIntoTrueForm")
+
+endFunction

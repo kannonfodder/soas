@@ -32,3 +32,8 @@ Event OnEffectFinish(Actor target, Actor Caster)
     ActorUtil.RemovePackageOverride(target, FollowPlayer)
     target.EvaluatePackage()
 endEvent
+
+Event OnDeath(Actor akKiller)
+    Debug.MessageBox("I died")
+    MiscUtil.PrintConsole("SOAS: " + akKiller.GetDisplayName() + " killed this actor")
+endEvent
