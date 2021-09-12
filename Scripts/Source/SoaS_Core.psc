@@ -76,7 +76,7 @@ event OnInit()
 	SetupRefs()
 endEvent
 
-function Maintenance()
+function Maintenance() ; Called by the player ref script attached to player alias
 	if(Version < 0.4)
 		SetupRefs()
 		Version = 0.4
