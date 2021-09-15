@@ -33,10 +33,13 @@ event OnPageDraw()
     AddHeaderOption("Core Features")
     AddToggleOptionST("ModEnabledState", "Enable SoaS", core.EnableSOAS)
     AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag) 
-    AddToggleOptionST("DisableEssentialFlagsToggle", "Disable Essential Flags", core.DisableEssentialFlags, _soas_enabled_flag)    
+    AddToggleOptionST("DisableEssentialFlagsToggle", "Disable Essential Flags", core.DisableEssentialFlags, _soas_enabled_flag)
+    AddHeaderOption("Influenced NPCs")
+    GetInfluencedNPCs()
     AddHeaderOption("TFC Integration")
     AddToggleOptionST("TFCDetected","TFC Detected", core.tfcInstalled, OPTION_FLAG_DISABLED)
-    AddMenuOptionST("TFCFormSelect", "TFC Cursed Form", tfcMenuEntries[core.tfcCurseFormId], _tfc_installed_flag)
+    AddMenuOptionST("TFCFormSelect", "TFC Cursed Form", tfcMenuEntries[0], _tfc_installed_flag)
+    
     SetCursorPosition(1)
     AddHeaderOption("Sweetest Taste")
     AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", core.SweetestTasteKeyCode, _soas_enabled_flag)
@@ -46,11 +49,24 @@ endEvent
 
 function SetupTFCMenu()
     int i = 0
+    tfcMenuEntries = new String[16]
     while (i < 16)
         tfcMenuEntries[i] = "Curse Form " + (i + 1)
         i += 1
 
     endWhile    
+endFunction
+
+function GetInfluencedNPCs()
+    int i = 0
+    while(i < core.maxInfluencedActors)
+        if(i < core.InfluencedActors.Length)
+            AddParagraph(core.InfluencedActors[i].GetDisplayName())
+        else
+            AddParagraph("Empty")
+        endif
+        i = i + 1
+    endWhile
 endFunction
 
 state ModEnabledState
@@ -160,6 +176,8 @@ state TFCDetected
     endEvent
 endState
 
+;;Core.TFCCurseFormId is from 1-16 to match the value that tfc expects
+; The 
 state TFCFormSelect
     event OnMenuOpenST(string state_id)
 		SetMenuDialogStartIndex(core.tfcCurseFormId - 1)

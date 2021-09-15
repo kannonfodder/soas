@@ -1,7 +1,6 @@
 Scriptname SoaS_Seductionmagicfx extends ActiveMagicEffect
 
 Actor property playerRef auto
-Faction property SeducedFaction auto
 Package property FollowPlayer auto
 SoaS_SceneStarter property SceneStarter auto
 
@@ -19,7 +18,6 @@ Event OnEffectStart(Actor target, Actor Caster)
     
     originalRelationshipRank = target.GetRelationshipRank(playerRef)
     target.SetRelationshipRank(playerRef, 3)
-    target.AddToFaction(SeducedFaction)
     ActorUtil.AddPackageOverride(target, FollowPlayer)
     target.EvaluatePackage()
     SceneStarter.StartSceneProximity(target)
@@ -27,13 +25,7 @@ endEvent
 
 Event OnEffectFinish(Actor target, Actor Caster)
 
-    target.RemoveFromFaction(SeducedFaction)
-    target.SetRelationshipRank(playerRef,originalRelationshipRank)
+    target.SetRelationshipRank(playerRef, originalRelationshipRank - 1)
     ActorUtil.RemovePackageOverride(target, FollowPlayer)
     target.EvaluatePackage()
-endEvent
-
-Event OnDeath(Actor akKiller)
-    Debug.MessageBox("I died")
-    MiscUtil.PrintConsole("SOAS: " + akKiller.GetDisplayName() + " killed this actor")
 endEvent

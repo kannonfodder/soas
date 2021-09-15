@@ -7,8 +7,6 @@ Faction Property forcelevel1Faction auto
 Faction Property forcelevel2Faction auto
 Faction Property forcelevel3Faction Auto
 
-Faction Property SeducedFaction Auto
-
 Bool Property EnableSOAS auto
 
 float Property DrainedForce auto
@@ -36,6 +34,7 @@ Spell property PowerOfLilith auto
 Spell property DrainSpell auto
 Spell property SoulDrainAbility auto
 Spell property SeductionSpell auto
+Spell property InfluenceSpell auto
 
 
 Spell property VictimDebuff50 auto
@@ -64,19 +63,17 @@ float level3Limit = 490.0
 
 float MaxPlayerLifeForce = 500.0
 
-bool secondActorSeduced = false
-bool thirdActorSeduced = false
-
-bool property InSeducedScene = false auto
-
 float property Version auto
+
+int property maxInfluencedActors = 2 auto
+Actor[] property InfluencedActors auto
 
 ;;;;;;;;;;;;;;;;;;;
 ; TFC Integration ;
 ;;;;;;;;;;;;;;;;;;;
 
 bool property tfcInstalled = false auto
-int property tfcCurseFormId = 1 auto
+int property tfcCurseFormId = 1 auto ; value in tfc, ranges from 1 - 16
 
 event OnInit()
 	Debug.Notification("Setting up SoaS")
@@ -90,14 +87,22 @@ function Maintenance() ; Called by the player ref script attached to player alia
 	endif
 	if(Version < 1.03)		
 		tfcInstalled = game.GetFormFromFile(0x0000801, "TrueFormCurse.esp") != none	
-		if(tfcInstalled)
-			Debug.Notification("Soas: True form curse installed")
-		endif
 		Version = 1.03
 	endif
+	
+	if(Version < 1.1)
+		if(EnableSOAS)		
+			playerref.AddSpell(InfluenceSpell)			
+		endif
+		InfluencedActors = PapyrusUtil.ActorArray(0)
+	endif
+	
+	Version = 1.1	
+
 	if(EnableSOAS)
 		RegisterForModEvents()
 	endIf
+	
 endFunction
 
 function SetupRefs()
@@ -122,6 +127,7 @@ function EnableMod()
 	RegisterForModEvents()
 	playerref.AddSpell(PowerOfLilith)
 	playerref.AddSpell(SeductionSpell)
+	playerref.AddSpell(InfluenceSpell)
 	RegisterForSingleUpdate(3.0)
 endFunction
 
@@ -191,29 +197,16 @@ event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 			secondActor = currentActors[0]
 			thirdActor = currentActors[1]	
 		endif	
-		
-		if(secondActor.IsInFaction(SeducedFaction))
-			secondActorSeduced = true
-		endif
-		if(thirdActor && thirdActor.IsInFaction(SeducedFaction))
-			thirdActorSeduced = true
-		endif
-		if(!secondActorSeduced && !thirdActorSeduced)
-			return
-		Else
-			InSeducedScene = true
-		endif
 
 		PlayerForceBar.ForcePercent(PlayerLifeForce / MaxPlayerLifeForce)
 		SetBarVisible(PlayerForceBar, true)
 		float currentSecondActorForce = 0.0
 		float currentThirdActorForce = 0.0
 
-		if(secondActorSeduced)
-			secondActorInitialForce = StartPassiveDrain(secondActor, SecondActorForceBar)
-			currentSecondActorForce = secondActorInitialForce
-		endif
-		if(thirdActor != None && thirdActorSeduced)
+		secondActorInitialForce = StartPassiveDrain(secondActor, SecondActorForceBar)
+		currentSecondActorForce = secondActorInitialForce
+
+		if(thirdActor != None)
 			thirdActorInitialForce = StartPassiveDrain(thirdActor, ThirdActorForcebar)
 			currentThirdActorForce = thirdActorInitialForce
 		endif		
@@ -223,10 +216,9 @@ event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 		While (ostim.animationRunning())
 			Utility.Wait(1)
 			if (DrainActive)
-				if(secondActorSeduced)
-					currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
-				endif
-				if(thirdActor != None && thirdActorSeduced)
+				currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
+
+				if(thirdActor != None)
 					currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar)
 				endif
 			endif
@@ -242,7 +234,6 @@ event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 		;VictimDebuff5.Cast(secondActor)		
 	endif
 	SetBarVisible(PlayerForceBar, false)
-	InSeducedScene = false
 	secondActor.DispelSpell(SeductionSpell)
 	if(thirdActor)
 		thirdActor.DispelSpell(SeductionSpell)
@@ -259,7 +250,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 				PerformUncontrolledDrain()
 			endif
 		endif		
-	Elseif(orgasmer == secondActor && secondActorSeduced)
+	Elseif(orgasmer == secondActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
 			MiscUtil.PrintConsole("SoaS: Key Pressed - performing sweetest taste")
 			PerformSweetestTaste(secondActor)
@@ -267,7 +258,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 			MiscUtil.PrintConsole("SoaS: Key NOT Pressed ")
 			
 		endif
-	ElseIf(orgasmer == thirdActor && thirdActorSeduced)
+	ElseIf(orgasmer == thirdActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
 			PerformSweetestTaste(thirdActor)
 		endif		
@@ -279,9 +270,7 @@ function ResetActors()
 	SetBarVisible(ThirdActorForceBar, false)
 
 	secondActor = None
-	secondActorSeduced = false
 	thirdActor = None
-	thirdActorSeduced = false
 
 	secondActorPassiveDrain = 0.0
 	thirdActorPassiveDrain = 0.0
@@ -356,9 +345,12 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 			actBase.SetEssential(false)
 			actBase.SetProtected(false)
 		endif
-		;ostim.EndAnimation()
-		Utility.Wait(0.5)
-		DrainSpell.RemoteCast(playerref, playerref, act)
+		DrainSpell.Cast(playerref, act)
+		;DrainSpell.RemoteCast(playerref, playerref, act)
+		while(!act.IsDead())
+			Utility.Wait(0.3)
+		endWhile
+		ostim.EndAnimation()
 		return true
 	Else
 		AbsorbForce(amountToDrain)
@@ -445,6 +437,48 @@ function CalculateLilithChanges(bool silent = false)
 	endif
 endFunction
 
+float function GetLifeForce(Actor act)
+	
+	float lastCheckTime =  StorageUtil.GetFloatValue(act as form, LifeForceCheckName, 0)
+	StorageUtil.SetFloatValue(act, LifeForceCheckName, Utility.GetCurrentGameTime())
+
+	float storedAmount = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
+	if(lastcheckTime > 0)		
+		float currenttime = Utility.GetCurrentGameTime()
+		float timePassed = currenttime - lastCheckTime
+		float regenAmount = ForceRegenRate * timePassed
+		if(regenAmount > 100.0 - storedAmount)
+			storedAmount = 100.0
+		else
+			storedAmount += regenAmount
+		endif
+		SetLifeForce(act, storedAmount)
+	endif
+	return storedAmount
+endFunction
+
+function SetLifeForce(Actor act, float amount)
+	StorageUtil.SetFloatValue(act as form, LifeForceName, amount)
+endFunction
+
+
+function InfluenceActor(Actor act)
+	if(InfluencedActors.Length == maxInfluencedActors)
+		InfluencedActors[0].DispelSpell(InfluenceSpell)
+		InfluencedActors = PapyrusUtil.RemoveActor(InfluencedActors, InfluencedActors[0])
+	endif
+	InfluencedActors = PapyrusUtil.PushActor(InfluencedActors, act)
+endFunction
+
+function UnInfluenceActor(Actor act)	
+	InfluencedActors = PapyrusUtil.RemoveActor(InfluencedActors, act)
+endFunction
+
+;;;;;;;;;;
+;;; UI ;;;
+;;;;;;;;;;
+
+
 function InitPlayerForceBar()
 	PlayerForceBar.HAnchor = "left"
 	PlayerForceBar.VAnchor = "bottom"
@@ -486,31 +520,6 @@ function SetBarVisible(Osexbar bar, Bool visible)
 	EndIf
 endFunction
 
-float function GetLifeForce(Actor act)
-	
-	float lastCheckTime =  StorageUtil.GetFloatValue(act as form, LifeForceCheckName, 0)
-	StorageUtil.SetFloatValue(act, LifeForceCheckName, Utility.GetCurrentGameTime())
-
-	float storedAmount = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
-	if(lastcheckTime > 0)		
-		float currenttime = Utility.GetCurrentGameTime()
-		float timePassed = currenttime - lastCheckTime
-		float regenAmount = ForceRegenRate * timePassed
-		if(regenAmount > 100.0 - storedAmount)
-			storedAmount = 100.0
-		else
-			storedAmount += regenAmount
-		endif
-		SetLifeForce(act, storedAmount)
-	endif
-	return storedAmount
-endFunction
-
-function SetLifeForce(Actor act, float amount)
-	StorageUtil.SetFloatValue(act as form, LifeForceName, amount)
-endFunction
-
-
 function ShowPlayerForceBar()
 	SetBarVisible(PlayerForceBar, true)
 	Utility.Wait(5)
@@ -536,6 +545,10 @@ function TurnToTrueForm()
 	if(!tfcInstalled)
 		return
 	endif
-	SendModEvent("TFCTurnIntoTrueForm")
-
+	int handle  = ModEvent.Create("TFCTurnIntoTrueForm")
+	if(handle)
+		ModEvent.Send(handle)
+	endif	
 endFunction
+
+
