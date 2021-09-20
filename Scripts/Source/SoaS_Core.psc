@@ -75,6 +75,22 @@ Actor[] property InfluencedActors auto
 bool property tfcInstalled = false auto
 int property tfcCurseFormId = 1 auto ; value in tfc, ranges from 1 - 16
 
+;;;;;;;;;;;;;;;;;
+;; Progression ;;
+;;;;;;;;;;;;;;;;;
+
+float property CurrentExp = 0.0 auto
+float killExpValue = 100.0
+float overdrainExpValue = 0.2
+float property nextRequiredExp = 0.0 auto
+GlobalVariable Property SuccubusLevel auto 
+GlobalVariable Property SuccubusLevelUpDisplayValue auto ; Shows the level up swoosh when set > 1
+GlobalVariable Property SuccubusLevelUpRatio auto ; level up % for bar
+GlobalVariable Property SuccubusSavedLevels auto 
+GlobalVariable Property SuccubusLevelPerks auto ;BIND THIS
+Message property SaveOrSpendMessage auto
+
+
 event OnInit()
 	Debug.Notification("Setting up SoaS")
 	Maintenance()
@@ -95,14 +111,14 @@ function Maintenance() ; Called by the player ref script attached to player alia
 			playerref.AddSpell(InfluenceSpell)			
 		endif
 		InfluencedActors = PapyrusUtil.ActorArray(0)
+		CalculateNextRequiredExp()
 	endif
 	
 	Version = 1.1	
-
+	
 	if(EnableSOAS)
 		RegisterForModEvents()
 	endIf
-	
 endFunction
 
 function SetupRefs()
@@ -111,6 +127,7 @@ function SetupRefs()
 	InitPlayerForceBar()
 	InitVictimForceBar(SecondActorForceBar, 0)
 	InitVictimForceBar(ThirdActorForceBar, 1)
+	RegisterForKey(80) ; DEBUG
 endFunction
 
 function ToggleEnableMod()
@@ -175,7 +192,9 @@ endEvent
 
 event OstimStartScene(string eventName, string strArg, float numArg, Form sender)	
 	ResetActors()
-
+	if(ostim.HasSceneMetadata("Ostim_Manual_Start"))
+		return 
+	endif
 	Actor[] currentActors = ostim.GetActors()
 	bool IsPlayerInvolved = ostim.IsPlayerInvolved()
 	if (IsPlayerInvolved)
@@ -239,6 +258,8 @@ event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 		thirdActor.DispelSpell(SeductionSpell)
 	endif
 	ResetActors()
+	Utility.Wait(1)
+	CalculateExpChanges()
 endEvent
 
 event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
@@ -331,6 +352,7 @@ function PerformSweetestTaste(Actor act)
 	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5, true)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
 		AbsorbForce(25, true) ; free force, should push level 0 -> level 1		
 		SweetestTasteAbility.Cast(playerref) ; Only applies buffs if within the corect faction (Spell/ME condition controlled)
+		AddExp(killExpValue) ; Only reward exp if within sweetest taste
 	endif
 endFunction
 
@@ -367,14 +389,16 @@ function AbsorbForce(float amount, bool ignoreLevelLimit = false)
 		PlayerLifeForce = level1Limit
 	else
 		if(PlayerLifeForce + absorbValue > MaxPlayerLifeForce)
-			PlayerLifeForce = MaxPlayerLifeForce
+			float overDrain = MaxPlayerLifeForce - (PlayerLifeForce + absorbValue)
+			AddExp(overdrainExpValue * overDrain)
+			PlayerLifeForce = MaxPlayerLifeForce			
 		Else
 			PlayerLifeForce += absorbValue
 		endif
 	endif
 	
 	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
-
+	
 	CalculateLilithChanges()
 		
 	;MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
@@ -551,4 +575,58 @@ function TurnToTrueForm()
 	endif	
 endFunction
 
+
+;;;;;;;;;;;;;;;;;
+;; Progression ;;
+;;;;;;;;;;;;;;;;;
+
+function AddExp(float exp)
+	CurrentExp = CurrentExp + exp
+endFunction
+
+function AddExpAndCalculateChanges(float exp)
+	CurrentExp = CurrentExp + exp
+	CalculateExpChanges()
+endFunction
+
+function CalculateNextRequiredExp()	
+	nextRequiredExp = 45 * Math.Log(Math.Pow(SuccubusLevel.GetValue(), 2) + Math.Pow(playerref.GetLevel() * 5, 2))	
+endfunction
+
+function CalculateExpChanges()
+	
+	while(CurrentExp > nextRequiredExp) ; Level Up	
+		SuccubusLevelUpRatio.SetValue(1.0)	
+		CurrentExp = CurrentExp - nextRequiredExp
+		CalculateNextRequiredExp()
+		int selection = SaveOrSpendMessage.Show()
+		int newSuccubusLevel = (SuccubusLevel.GetValue() + 1) as int
+		if(selection == 0)
+			SuccubusSavedLevels.SetValue(SuccubusSavedLevels.GetValue() + 1)
+			UpdateCurrentInstanceGlobal(SuccubusSavedLevels)
+		else
+			SuccubusLevel.SetValue(newSuccubusLevel)
+			SuccubusLevelUpDisplayValue.SetValue(SuccubusLevel.GetValue())
+			if(!( newSuccubusLevel as float / 5 - Math.Floor(newSuccubusLevel as float / 5) > 0 ) && newSuccubusLevel != 0)
+				SuccubusLevelPerks.SetValue(SuccubusLevelPerks.GetValue() + 1)
+			endIf
+		endif		
+		Utility.Wait(0.75)
+	endWhile
+	SuccubusLevelUpRatio.SetValue(CurrentExp / nextRequiredExp)
+endFunction
+
+
+;;;;;;;;;;;
+;; Debug ;;
+;;;;;;;;;;;
+
+event OnKeyDown(int keycode)
+	if(ostim.AnimationRunning() || Utility.IsInMenuMode())
+		return
+	endif
+	if(keycode == 80)
+		AddExpAndCalculateChanges(400)
+	endif
+endevent
 

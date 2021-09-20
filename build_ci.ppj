@@ -33,6 +33,7 @@
     <Package Name="SoaS" RootDir="@MyProject">
     <Include>**/scripts/*.pex</Include>
     <Include>**/scripts/source/*.psc</Include>
+	<Include>**/NetScriptFramework/*.*</Include>
     </Package>
    </Packages>
    

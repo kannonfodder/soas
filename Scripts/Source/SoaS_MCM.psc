@@ -39,12 +39,15 @@ event OnPageDraw()
     AddHeaderOption("TFC Integration")
     AddToggleOptionST("TFCDetected","TFC Detected", core.tfcInstalled, OPTION_FLAG_DISABLED)
     AddMenuOptionST("TFCFormSelect", "TFC Cursed Form", tfcMenuEntries[0], _tfc_installed_flag)
-    
+    AddHeaderOption("Debug")
+    AddParagraph("Current Exp: " + core.CurrentExp)
+    AddParagraph("Required Exp" + core.NextRequiredExp)
     SetCursorPosition(1)
     AddHeaderOption("Sweetest Taste")
     AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", core.SweetestTasteKeyCode, _soas_enabled_flag)
     AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Activating sweetest taste at the point of orgasm will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")
-    AddKeyMapOptionST("UIModifierKeyMap", "Ui key", soasui.UI_Modifier, _soas_enabled_flag)
+    AddKeyMapOptionST("UIModifierKeyMap", "UI key", soasui.UI_Modifier, _soas_enabled_flag)
+    AddKeyMapOptionST("PerkTreeModifierKeyMap","Perk key", soasui.Perk_Modifier, _soas_enabled_flag)
 endEvent
 
 function SetupTFCMenu()
@@ -125,6 +128,26 @@ state UIModifierKeyMap
         soasui.UI_Modifier = keycode
         soasui.RegisterForKey(soasui.UI_Modifier)
         SetKeyMapOptionValueST(keycode)
+    endEvent
+endState
+
+state PerkTreeModifierKeyMap
+    event OnDefaultST(string state_id)
+        soasui.UnregisterForKey(soasui.Perk_Modifier)
+        soasui.Perk_Modifier = 42 ;shift
+        soasui.RegisterForKey(soasui.Perk_Modifier)
+        SetKeyMapOptionValueST(soasui.Perk_Modifier)
+    endEvent
+
+    event OnHighLightST(string state_id)
+        SetInfoText("If pressed with the sweetest taste key will show the skill tree")
+    endEvent
+
+    event OnKeyMapChangeST(string state_id, int keycode)
+        soasui.UnregisterForKey(soasui.Perk_Modifier)
+        soasui.Perk_Modifier = keycode
+        soasui.RegisterForKey(soasui.Perk_Modifier)
+        SetKeyMapOptionValueST(soasui.Perk_Modifier)
     endEvent
 endState
 
