@@ -32,22 +32,25 @@ event OnPageDraw()
     SetCursorFillMode(TOP_TO_BOTTOM)
     AddHeaderOption("Core Features")
     AddToggleOptionST("ModEnabledState", "Enable SoaS", core.EnableSOAS)
-    AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag) 
-    AddToggleOptionST("DisableEssentialFlagsToggle", "Disable Essential Flags", core.DisableEssentialFlags, _soas_enabled_flag)
-    AddHeaderOption("Influenced NPCs")
-    GetInfluencedNPCs()
-    AddHeaderOption("TFC Integration")
-    AddToggleOptionST("TFCDetected","TFC Detected", core.tfcInstalled, OPTION_FLAG_DISABLED)
-    AddMenuOptionST("TFCFormSelect", "TFC Cursed Form", tfcMenuEntries[0], _tfc_installed_flag)
-    AddHeaderOption("Debug")
-    AddParagraph("Current Exp: " + core.CurrentExp)
-    AddParagraph("Required Exp" + core.NextRequiredExp)
-    SetCursorPosition(1)
-    AddHeaderOption("Sweetest Taste")
-    AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", core.SweetestTasteKeyCode, _soas_enabled_flag)
-    AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Activating sweetest taste at the point of orgasm will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")
-    AddKeyMapOptionST("UIModifierKeyMap", "UI key", soasui.UI_Modifier, _soas_enabled_flag)
-    AddKeyMapOptionST("PerkTreeModifierKeyMap","Perk key", soasui.Perk_Modifier, _soas_enabled_flag)
+    if(core.EnableSOAS)
+        AddToggleOptionST("EnableUncontrolledDrain", "Enable Uncontrolled Drains", core.EnableUncontrolledDrain, _soas_enabled_flag) 
+        AddToggleOptionST("DisableEssentialFlagsToggle", "Disable Essential Flags", core.DisableEssentialFlags, _soas_enabled_flag)
+        AddHeaderOption("Influenced NPCs")
+        GetInfluencedNPCs()
+        AddHeaderOption("TFC Integration")
+        AddToggleOptionST("TFCDetected","TFC Detected", core.tfcInstalled, OPTION_FLAG_DISABLED)
+        AddMenuOptionST("TFCFormSelect", "TFC Cursed Form", tfcMenuEntries[0], _tfc_installed_flag)
+        AddHeaderOption("Debug")
+        AddSliderOptionST("DrainRate", "Drain Rate", core.PassiveDrainModifier, "{2}x", _soas_enabled_flag)
+        AddTextOptionST("CurrentExp", "Current Exp:", core.CurrentExp)
+        AddTextOptionST("RequiredExp", "Required Exp:", core.nextRequiredExp)
+        SetCursorPosition(1)
+        AddHeaderOption("Sweetest Taste")
+        AddKeyMapOptionST("AttemptSweetestKissMap","Activate Sweetest Taste key", core.SweetestTasteKeyCode, _soas_enabled_flag)
+        AddParagraph("The sweetest taste a succubus can experience is to kill their victim at the peak of an orgasm. Activating sweetest taste at the point of orgasm will force you to try and draw a large sum of force from the victim when they orgasm. If their life force is fully drained they will die.")
+        AddKeyMapOptionST("UIModifierKeyMap", "UI key", soasui.UI_Modifier, _soas_enabled_flag)
+        AddKeyMapOptionST("PerkTreeModifierKeyMap","Perk key", soasui.Perk_Modifier, _soas_enabled_flag)
+    endif
 endEvent
 
 function SetupTFCMenu()
@@ -221,4 +224,18 @@ state TFCFormSelect
 	event OnHighlightST(string state_id)
 		SetInfoText("Which cursed form to use if tfc is enabled")
 	endEvent
+endState
+
+state DrainRate    
+    event OnSliderOpenST(string state_id)
+        SetSliderDialog(core.PassiveDrainModifier, 0.25, 3.0, 0.25, 1.0)
+    endEvent
+
+    event OnSliderAcceptST(string state_id, float value)
+        core.PassiveDrainModifier = value
+    endEvent
+
+    event OnHighlightST(string state_id)
+        SetInfoText("How fast to drain victims (is affected by perks)")
+    endEVent
 endState

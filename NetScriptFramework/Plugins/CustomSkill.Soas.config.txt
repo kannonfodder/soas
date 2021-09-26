@@ -60,34 +60,56 @@ DebugReloadId = 0
 # Node0 is the root node, this should not have coordinates or a perk assigned to it. This must exist even if you don't want to have any perks.
 # Use Node0.Links to point to first perk(s). If you don't want any perks then remove the links line or set to ""
 Node0.Enable = true
-Node0.Links = "1"
+Node0.Links = "4"
 
 # Actual perks begin from here. When you are making a condition on perk for specific level of skill required instead of GetBaseActorValue use GetGlobalValue
 # for the global variable you set in the "Level" option. This will generate correct requirement description in-game.
 # Use GridX and GridY to place the node (negative value not supported), X and Y is extra offset for more precise placement (can have fractions and can be negative)
 # GridX goes from right to left (lower value to higher), GridY goes from bottom to top (lower value to higher)
 
+#Increase Buff1
 Node1.Enable = true
 Node1.PerkFile = "soas.esp"
 Node1.PerkId = 0xDAA
 Node1.X = 0
 Node1.Y = 0
-Node1.GridX = 0
-Node1.GridY = 0
+Node1.GridX = 1
+Node1.GridY = 1
 Node1.Links = "2 3"
 
+#IncreaseBuff2
 Node2.Enable = true
 Node2.PerkFile = "soas.esp"
 Node2.PerkId = 0x8E5
 Node2.X = 0
 Node2.Y = 0
-Node2.GridX = 0
-Node2.GridY = 1
+Node2.GridX = 1
+Node2.GridY = 2
 
+#Reduce Debuff
 Node3.Enable = true
 Node3.PerkFile = "soas.esp"
 Node3.PerkId = 0x8E6
 Node3.X = -0.5
 Node3.Y = -0.5
-Node3.GridX = 1
-Node3.GridY = 1
+Node3.GridX = 2
+Node3.GridY = 2
+
+#Drain Rate
+Node4.Enable = true
+Node4.PerkFile = "soas.esp"
+Node4.PerkID = 0x826
+Node4.X = 0
+Node4.Y = 0
+Node4.GridX = 1
+Node4.GridY = 0
+Node4.Links = "1 5"
+
+#Silent Drain
+Node5.Enable = true
+Node5.PerkFile = "soas.esp"
+Node5.PerkID = 0xE22
+Node5.X = 0.5
+Node5.Y = 0.5
+Node5.GridX = 0
+Node5.GridY = 1

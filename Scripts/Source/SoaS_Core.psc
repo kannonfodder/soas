@@ -7,16 +7,35 @@ Faction Property forcelevel1Faction auto
 Faction Property forcelevel2Faction auto
 Faction Property forcelevel3Faction Auto
 
-Bool Property EnableSOAS auto
+Bool Property EnableSOAS = true auto
 
 float Property DrainedForce auto
-float Property PassiveDrainModifier = 0.9 auto
-float Property DrainResultModifier = 1.0 auto
+float _baseDrainResult = 1.0
+float Property PassiveDrainModifier
+	function set(float newVal)
+		_baseDrainResult = newVal
+	endFunction
+	float function get()
+		if (playerRef.HasPerk(DrainRate00))
+			return _baseDrainResult * 2
+		elseIf (playerRef.HasPerk(DrainRate80))
+			return _baseDrainResult * 1.8
+		elseIf (playerRef.HasPerk(DrainRate60))
+			return _baseDrainResult * 1.6
+		elseIf (playerRef.HasPerk(DrainRate40))				
+			return _baseDrainResult * 1.4
+		elseIf (playerRef.HasPerk(DrainRate20))
+			return _baseDrainResult * 1.2
+		else
+			return _baseDrainResult
+		endif			
+	endFunction
+endProperty
 float Property ActiveDrainAmount = 30.0 auto
 float Property ForceRegenRate = 100.0 auto ; Life force regenerated per day
 
 bool Property EnableUncontrolledDrain = true auto
-bool property DisableEssentialFlags = false auto
+bool Property DisableEssentialFlags = false auto
 
 float Property PlayerLifeForce = 150.0 auto
 float PlayerLifeForceLastCheckTime = 0.0
@@ -26,20 +45,20 @@ float Property PlayerLifeForceConstantDrain = 100.0 auto
 int Property SweetestTasteKeyCode = 39 auto
 Spell Property SweetestTasteAbility auto
 
-string property LifeForceName = "soas_life_force" auto
-string property LifeForceCheckName = "soas_life_force_check" auto
+string Property LifeForceName = "soas_life_force" auto
+string Property LifeForceCheckName = "soas_life_force_check" auto
 
-Spell property PowerOfLilith auto
+Spell Property PowerOfLilith auto
 
-Spell property DrainSpell auto
-Spell property SoulDrainAbility auto
-Spell property SeductionSpell auto
-Spell property InfluenceSpell auto
+Spell Property DrainSpell auto
+Spell Property SoulDrainAbility auto
+Spell Property SeductionSpell auto
+Spell Property InfluenceSpell auto
 
 
-Spell property VictimDebuff50 auto
-Spell property VictimDebuff25 auto
-Spell property VictimDebuff5 auto
+Spell Property VictimDebuff50 auto
+Spell Property VictimDebuff25 auto
+Spell Property VictimDebuff5 auto
 	
 OsexIntegrationMain ostim 
 OSexBar PlayerForceBar
@@ -49,7 +68,7 @@ OSexBar Property ThirdActorForceBar auto
 Actor secondActor = none
 Actor thirdActor = none
 
-bool property DrainActive = true auto
+bool Property DrainActive = true auto
 
 float secondActorInitialForce
 float thirdActorInitialForce
@@ -63,32 +82,44 @@ float level3Limit = 490.0
 
 float MaxPlayerLifeForce = 500.0
 
-float property Version auto
+float Property Version auto
 
-int property maxInfluencedActors = 2 auto
-Actor[] property InfluencedActors auto
+int Property maxInfluencedActors = 2 auto
+Actor[] Property InfluencedActors auto
 
 ;;;;;;;;;;;;;;;;;;;
 ; TFC Integration ;
 ;;;;;;;;;;;;;;;;;;;
 
-bool property tfcInstalled = false auto
-int property tfcCurseFormId = 1 auto ; value in tfc, ranges from 1 - 16
+bool Property tfcInstalled = false auto
+int Property tfcCurseFormId = 1 auto ; value in tfc, ranges from 1 - 16
 
 ;;;;;;;;;;;;;;;;;
 ;; Progression ;;
 ;;;;;;;;;;;;;;;;;
 
-float property CurrentExp = 0.0 auto
+float Property CurrentExp = 0.0 auto
 float killExpValue = 100.0
 float overdrainExpValue = 0.2
-float property nextRequiredExp = 0.0 auto
+float Property nextRequiredExp = 0.0 auto
 GlobalVariable Property SuccubusLevel auto 
 GlobalVariable Property SuccubusLevelUpDisplayValue auto ; Shows the level up swoosh when set > 1
 GlobalVariable Property SuccubusLevelUpRatio auto ; level up % for bar
 GlobalVariable Property SuccubusSavedLevels auto 
 GlobalVariable Property SuccubusLevelPerks auto ;BIND THIS
-Message property SaveOrSpendMessage auto
+Message Property SaveOrSpendMessage auto
+
+Perk Property DrainRate20 auto
+Perk Property DrainRate40 auto
+Perk Property DrainRate60 auto
+Perk Property DrainRate80 auto
+Perk Property DrainRate00 auto
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Message Queueing ;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+string[] messageQueue
 
 
 event OnInit()
@@ -97,6 +128,13 @@ event OnInit()
 endEvent
 
 function Maintenance() ; Called by the player ref script attached to player alias
+	if(SuccubusLevel.GetValueInt() == 0)
+		SuccubusLevel.SetValue(1)
+	endIf
+	if(Version == 0)			
+		playerref.AddSpell(PowerOfLilith)
+		playerref.AddSpell(SeductionSpell)		
+	endIf
 	if(Version < 0.4)
 		SetupRefs()
 		Version = 0.4
@@ -112,6 +150,7 @@ function Maintenance() ; Called by the player ref script attached to player alia
 		endif
 		InfluencedActors = PapyrusUtil.ActorArray(0)
 		CalculateNextRequiredExp()
+		messageQueue = PapyrusUtil.StringArray(10)
 	endif
 	
 	Version = 1.1	
@@ -119,6 +158,7 @@ function Maintenance() ; Called by the player ref script attached to player alia
 	if(EnableSOAS)
 		RegisterForModEvents()
 	endIf
+	RegisterForSingleUpdate(3.0)
 endFunction
 
 function SetupRefs()
@@ -231,14 +271,14 @@ event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 		endif		
 		
 		
-
+		float cachedDrainModifier = PassiveDrainModifier
 		While (ostim.animationRunning())
 			Utility.Wait(1)
 			if (DrainActive)
-				currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
+				currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar, cachedDrainModifier)
 
 				if(thirdActor != None)
-					currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar)
+					currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar, cachedDrainModifier)
 				endif
 			endif
 		EndWhile
@@ -260,6 +300,7 @@ event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 	ResetActors()
 	Utility.Wait(1)
 	CalculateExpChanges()
+	SendQueuedMessages()
 endEvent
 
 event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
@@ -305,7 +346,7 @@ float function StartPassiveDrain(Actor act, OSexBar bar)
 	return initialForce
 endFunction
 
-float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar)	
+float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar, float cachedDrainModifier)	
 	float playerComponent = ostim.GetActorExcitement(playerref) + 1
 	if(playerComponent > 100.0)
 		playerComponent = 100.0
@@ -321,7 +362,7 @@ float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorFor
 		victimExcitement = 100.0
 	endif
 	float victimComponent = Math.pow(victimExcitement, 1.5)
-	float passiveDrainAmount = (PassiveDrainModifier * (victimComponent) * (playerComponent)) / 10000
+	float passiveDrainAmount = (cachedDrainModifier * (victimComponent) * (playerComponent)) / 10000 
 
 	;MiscUtil.PrintConsole("SoaS: Drain Amount: " + passiveDrainAmount)
 	if(initialForce >= 1.0)
@@ -383,7 +424,7 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 endFunction
 
 function AbsorbForce(float amount, bool ignoreLevelLimit = false)
-	float absorbValue = amount * DrainResultModifier
+	float absorbValue = amount
 	DrainedForce += absorbValue
 	if(!ignoreLevelLimit && playerRef.IsInFaction(forcelevel0Faction) && PlayerLifeForce + absorbValue > level1Limit)
 		PlayerLifeForce = level1Limit
@@ -457,7 +498,7 @@ function CalculateLilithChanges(bool silent = false)
 		endif
 	endif
 	if(!silent)
-		Debug.Notification(notificationMessage)
+		QueueNotification(notificationMessage)
 	endif
 endFunction
 
@@ -590,14 +631,13 @@ function AddExpAndCalculateChanges(float exp)
 endFunction
 
 function CalculateNextRequiredExp()	
-	nextRequiredExp = 45 * Math.Log(Math.Pow(SuccubusLevel.GetValue(), 2) + Math.Pow(playerref.GetLevel() * 5, 2))	
+	nextRequiredExp = nextRequiredExp + ( 45 * Math.Log(Math.Pow(SuccubusLevel.GetValue(), 2) + Math.Pow(playerref.GetLevel() * 5, 2)) )
 endfunction
 
 function CalculateExpChanges()
 	
 	while(CurrentExp > nextRequiredExp) ; Level Up	
-		SuccubusLevelUpRatio.SetValue(1.0)	
-		CurrentExp = CurrentExp - nextRequiredExp
+		SuccubusLevelUpRatio.SetValue(1.0)			
 		CalculateNextRequiredExp()
 		int selection = SaveOrSpendMessage.Show()
 		int newSuccubusLevel = (SuccubusLevel.GetValue() + 1) as int
@@ -630,3 +670,29 @@ event OnKeyDown(int keycode)
 	endif
 endevent
 
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Message Queueing ;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+
+function QueueNotification(string notification)
+	if(ostim.IsRunning())
+		messageQueue = PapyrusUtil.PushString(messageQueue, notification)
+	else
+		Debug.Notification(notification)
+	endif
+endFunction
+
+function SendQueuedMessages()
+	int i = 0
+	while (i < messageQueue.Length)
+		string val = messageQueue[i]
+		if(val != "")
+			Debug.Notification(val)
+			Utility.Wait(0.5)
+		endIf
+		i = i + 1
+	endWhile
+	messageQueue = PapyrusUtil.StringArray(10)
+endFunction
