@@ -1,6 +1,9 @@
 Scriptname Soas_MCM_SpendPoints extends nl_mcm_module
 
 GlobalVariable Property SuccubusSavedLevels auto
+GlobalVariable Property SuccubusLevel auto
+GlobalVariable Property SuccubusLeveledUp auto
+GlobalVariable Property SuccubusLevelPerks auto
 Actor Property Player auto
 
 event OnInit()
@@ -27,7 +30,7 @@ event OnPageDraw()
 
     SetCursorPosition(1)
     AddEmptyOption()
-    AddEmptyOption()
+    AddTextOptionST("Succubus", "Succubus", "" +  SuccubusLevel.GetValueInt() + " (1)")
 
     AddHeaderOption("Magic Skills")
     AddSkillOption("Alteration", "Alteration")
@@ -43,6 +46,18 @@ event OnPageDraw()
     AddSkillOption("Speechcraft", "Speech")
     
 endEvent
+
+
+function ToggleMCM()
+    int old_hotkey = QuickHotkey
+    SetLandingPage("Skill Points")
+    QuickHotkey = 83
+    Utility.Wait(0.1)
+    Input.TapKey(83)
+    Utility.Wait(0.5)
+    QuickHotkey = old_hotkey
+    SetLandingPage("Configuration")
+endfunction
 
 function AddSkillOption(string skill, string skillName)
     int currentValue = player.GetActorValue(skill) as int
@@ -80,6 +95,30 @@ int function CostToIncrease(string skill)
         return 5
     endif
 endFunction
+
+;;;;;;;;;;;;;;
+;; Succubus ;;
+;;;;;;;;;;;;;;
+
+state Succubus
+    event OnSelectST(string stateId)
+        if(1 > SuccubusSavedLevels.GetValueInt())
+            ShowMessage("Not enough points to level skill", false)
+            return
+        endif
+        if(ShowMessage("Level up Succubus skill for 1 point?", true))
+            int newSuccubusLevel = SuccubusLevel.GetValueInt() + 1
+            SuccubusLevel.SetValue(newSuccubusLevel)
+            SuccubusLeveledUp.SetValue(newSuccubusLevel)
+            SuccubusSavedLevels.SetValueInt(SuccubusSavedLevels.GetValueInt() - 1)            
+			if(!( newSuccubusLevel as float / 5 - Math.Floor(newSuccubusLevel as float / 5) > 0 ) && newSuccubusLevel != 0)
+				SuccubusLevelPerks.SetValue(SuccubusLevelPerks.GetValue() + 1)
+			endIf
+            ForcePageReset()
+        endif
+    endEvent
+endState
+
 
 ;;;;;;;;;;;;;
 ;; Warrior ;;
@@ -216,4 +255,3 @@ state Speechcraft
         ForcePageReset()        
     endEvent
 endState
-

@@ -103,10 +103,8 @@ float killExpValue = 100.0
 float overdrainExpValue = 0.2
 float Property nextRequiredExp = 0.0 auto
 GlobalVariable Property SuccubusLevel auto 
-GlobalVariable Property SuccubusLevelUpDisplayValue auto ; Shows the level up swoosh when set > 1
 GlobalVariable Property SuccubusLevelUpRatio auto ; level up % for bar
 GlobalVariable Property SuccubusSavedLevels auto 
-GlobalVariable Property SuccubusLevelPerks auto ;BIND THIS
 Message Property SaveOrSpendMessage auto
 
 Perk Property DrainRate20 auto
@@ -114,6 +112,8 @@ Perk Property DrainRate40 auto
 Perk Property DrainRate60 auto
 Perk Property DrainRate80 auto
 Perk Property DrainRate00 auto
+
+SoaS_MCM_SpendPoints Property SpendPointsMCM auto
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Message Queueing ;;
@@ -639,17 +639,16 @@ function CalculateExpChanges()
 	while(CurrentExp > nextRequiredExp) ; Level Up	
 		SuccubusLevelUpRatio.SetValue(1.0)			
 		CalculateNextRequiredExp()
+		SuccubusSavedLevels.SetValue(SuccubusSavedLevels.GetValue() + 1)
+		UpdateCurrentInstanceGlobal(SuccubusSavedLevels)
+		
 		int selection = SaveOrSpendMessage.Show()
-		int newSuccubusLevel = (SuccubusLevel.GetValue() + 1) as int
 		if(selection == 0)
-			SuccubusSavedLevels.SetValue(SuccubusSavedLevels.GetValue() + 1)
-			UpdateCurrentInstanceGlobal(SuccubusSavedLevels)
 		else
-			SuccubusLevel.SetValue(newSuccubusLevel)
-			SuccubusLevelUpDisplayValue.SetValue(SuccubusLevel.GetValue())
-			if(!( newSuccubusLevel as float / 5 - Math.Floor(newSuccubusLevel as float / 5) > 0 ) && newSuccubusLevel != 0)
-				SuccubusLevelPerks.SetValue(SuccubusLevelPerks.GetValue() + 1)
-			endIf
+			Utility.Wait(0.1)
+			
+			Input.TapKey(Input.GetMappedKey("Journal"))
+			; MCM.GoToPage("Skill Points")
 		endif		
 		Utility.Wait(0.75)
 	endWhile
@@ -666,7 +665,7 @@ event OnKeyDown(int keycode)
 		return
 	endif
 	if(keycode == 80)
-		AddExpAndCalculateChanges(400)
+		SpendPointsMCM.ToggleMCM()
 	endif
 endevent
 
@@ -677,7 +676,7 @@ endevent
 
 
 function QueueNotification(string notification)
-	if(ostim.IsRunning())
+	if(ostim.AnimationRunning())
 		messageQueue = PapyrusUtil.PushString(messageQueue, notification)
 	else
 		Debug.Notification(notification)
