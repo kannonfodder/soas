@@ -75,9 +75,11 @@ function SelectSkill(string skill, string skillName)
         return
     endif
     if(ShowMessage("Level up " + skillName + " for " + points + " points?", true))
-        int currentVal = Player.GetActorValue(skill) as int
+        int newValue = Player.GetActorValue(skill) as int + 1
         Game.IncrementSkill(skill)
         SuccubusSavedLevels.SetValueInt(SuccubusSavedLevels.GetValueInt() - points)
+        SetTextOptionValueST("" + newValue + " (" + CostToIncrease(skill) + ")", true)
+        SetTextOptionValueST(SuccubusSavedLevels.GetValueInt(), false, "PointsAvailable")
     endif
 endFunction
 
@@ -121,7 +123,8 @@ state Succubus
 			if(!( newSuccubusLevel as float / 5 - Math.Floor(newSuccubusLevel as float / 5) > 0 ) && newSuccubusLevel != 0)
 				SuccubusLevelPerks.SetValue(SuccubusLevelPerks.GetValue() + 1)
 			endIf
-            ForcePageReset()
+            SetTextOptionValueST("" +  newSuccubusLevel + " (1)")
+            SetTextOptionValueST(SuccubusSavedLevels.GetValueInt(), false, "PointsAvailable")
         endif
     endEvent
 endState
@@ -134,42 +137,36 @@ endState
 state Marksman
     event OnSelectST(string stateId)        
         SelectSkill("Marksman", "Archery")
-        ForcePageReset()        
     endEvent
 endState
 
 state Block
     event OnSelectST(string stateId)        
         SelectSkill("Block", "Block")
-        ForcePageReset()        
     endEvent
 endState
 
 state HeavyArmor
     event OnSelectST(string stateId)
         SelectSkill("HeavyArmor", "Heavy Armor")
-        ForcePageReset()        
     endEvent
 endState
 
 state OneHanded
     event OnSelectST(string stateId)
         SelectSkill("OneHanded", "One-Handed")
-        ForcePageReset()        
     endEvent
 endState
 
 state Smithing
     event OnSelectST(string stateId)        
         SelectSkill("Smithing", "Smithing")
-        ForcePageReset()        
     endEvent
 endState
 
 state TwoHanded
     event OnSelectST(string stateId)        
         SelectSkill("TwoHanded", "Two-Handed")
-        ForcePageReset()        
     endEvent
 endState
 ;;;;;;;;;;
@@ -179,42 +176,36 @@ endState
 state Alteration
     event OnSelectST(string stateId)        
         SelectSkill("Alteration", "Alteration")
-        ForcePageReset()        
     endEvent
 endState
 
 state Conjuration
     event OnSelectST(string stateId)        
         SelectSkill("Conjuration", "Conjuration")
-        ForcePageReset()        
     endEvent
 endState
 
 state Desctruction
     event OnSelectST(string stateId)        
         SelectSkill("Desctruction", "Desctruction")
-        ForcePageReset()        
     endEvent
 endState
 
 state Enchanting
     event OnSelectST(string stateId)        
         SelectSkill("Enchanting", "Enchanting")
-        ForcePageReset()        
     endEvent
 endState
 
 state Illusion
     event OnSelectST(string stateId)        
         SelectSkill("Illusion", "Illusion")
-        ForcePageReset()        
     endEvent
 endState
 
 state Restoration   
      event OnSelectST(string stateId)        
         SelectSkill("Restoration", "Restoration")
-        ForcePageReset()        
     endEvent
 endState
 ;;;;;;;;;;;
@@ -224,41 +215,35 @@ endState
 state Alchemy
     event OnSelectST(string stateId)        
         SelectSkill("Alchemy", "Alchemy")
-        ForcePageReset()        
     endEvent
 endState
 
 state LightArmor
     event OnSelectST(string stateId)        
         SelectSkill("LightArmor", "LightArmor")
-        ForcePageReset()        
     endEvent
 endState
 
 state LockPicking
     event OnSelectST(string stateId)        
         SelectSkill("LockPicking", "LockPicking")
-        ForcePageReset()        
     endEvent
 endState
 
 state PickPocket
     event OnSelectST(string stateId)        
         SelectSkill("PickPocket", "PickPocket")
-        ForcePageReset()        
     endEvent
 endState
 
 state Sneak
     event OnSelectST(string stateId)        
         SelectSkill("Sneak", "Sneak")
-        ForcePageReset()        
     endEvent
 endState
 
 state Speechcraft
     event OnSelectST(string stateId)        
         SelectSkill("Speechcraft", "Speech")
-        ForcePageReset()        
     endEvent
 endState
