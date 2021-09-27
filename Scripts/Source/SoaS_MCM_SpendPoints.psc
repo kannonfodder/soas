@@ -29,7 +29,7 @@ event OnPageDraw()
     AddSkillOption("LockPicking", "LockPicking")
 
     SetCursorPosition(1)
-    AddEmptyOption()
+    AddTextOptionST("CloseMenu", "Close Menu", "")
     AddTextOptionST("Succubus", "Succubus", "" +  SuccubusLevel.GetValueInt() + " (1)")
 
     AddHeaderOption("Magic Skills")
@@ -95,6 +95,13 @@ int function CostToIncrease(string skill)
         return 5
     endif
 endFunction
+
+state CloseMenu
+    event OnSelectST(string stateId)
+        CloseMCM(true)
+    endEvent
+endState
+
 
 ;;;;;;;;;;;;;;
 ;; Succubus ;;

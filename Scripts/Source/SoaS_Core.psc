@@ -647,8 +647,7 @@ function CalculateExpChanges()
 		else
 			Utility.Wait(0.1)
 			
-			Input.TapKey(Input.GetMappedKey("Journal"))
-			; MCM.GoToPage("Skill Points")
+			SpendPointsMCM.ToggleMCM()
 		endif		
 		Utility.Wait(0.75)
 	endWhile
@@ -665,7 +664,7 @@ event OnKeyDown(int keycode)
 		return
 	endif
 	if(keycode == 80)
-		SpendPointsMCM.ToggleMCM()
+		AddExpAndCalculateChanges(100)
 	endif
 endevent
 
