@@ -8,6 +8,7 @@ Actor Property Player auto
 
 event OnInit()
     RegisterModule("Skill Points", 1)
+    
 endEvent
 
 event OnPageDraw()

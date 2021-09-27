@@ -151,6 +151,9 @@ function Maintenance() ; Called by the player ref script attached to player alia
 		InfluencedActors = PapyrusUtil.ActorArray(0)
 		CalculateNextRequiredExp()
 		messageQueue = PapyrusUtil.StringArray(10)
+		if( nl_mcm_globalinfo.CurrentVersion() < 104 )
+			Debug.MessageBox(" Soul of a Succubus requires the latest version of nl_mcm (at least 1.0.4) to work properly. Go get it")
+		endif
 	endif
 	
 	Version = 1.1	
@@ -647,7 +650,7 @@ function CalculateExpChanges()
 		else
 			Utility.Wait(0.1)
 			
-			SpendPointsMCM.ToggleMCM()
+			SpendPointsMCM.OpenMCM("Skill Points")
 		endif		
 		Utility.Wait(0.75)
 	endWhile
