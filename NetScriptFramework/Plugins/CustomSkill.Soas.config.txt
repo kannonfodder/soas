@@ -113,3 +113,12 @@ Node5.X = 0.5
 Node5.Y = 0.5
 Node5.GridX = 0
 Node5.GridY = 1
+
+#Auto Seduce
+Node6.Enable = true
+Node6.PerkFile = "soas.esp"
+Node6.PerkID = 0xE24
+Node6.X = 0
+Node6.Y = 0
+Node6.GridX = 2
+Node6.GridY = 0
