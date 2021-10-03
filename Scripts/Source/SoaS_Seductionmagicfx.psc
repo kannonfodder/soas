@@ -37,9 +37,9 @@ Event OnEffectStart(Actor target, Actor Caster)
 endEvent
 
 Event OnEffectFinish(Actor target, Actor Caster)
-    if (success == false)
+    if (success == true)
         target.SetRelationshipRank(playerRef, originalRelationshipRank - 1)
+        ActorUtil.RemovePackageOverride(target, FollowPlayer)
+        target.EvaluatePackage()
     endif    
-    ActorUtil.RemovePackageOverride(target, FollowPlayer)
-    target.EvaluatePackage()
 endEvent

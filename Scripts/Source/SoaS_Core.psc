@@ -92,6 +92,7 @@ Actor[] Property InfluencedActors auto
 ;;;;;;;;;;;;;;;;;;;
 
 bool Property tfcInstalled = false auto
+bool Property tfcIntegrated = false auto
 int Property tfcCurseFormId = 1 auto ; value in tfc, ranges from 1 - 16
 
 ;;;;;;;;;;;;;;;;;
@@ -131,7 +132,7 @@ function Maintenance() ; Called by the player ref script attached to player alia
 	if(SuccubusLevel.GetValueInt() == 0)
 		SuccubusLevel.SetValue(1)
 	endIf
-	if(Version == 0)			
+	if(Version == 0 && EnableSOAS)			
 		playerref.AddSpell(PowerOfLilith)
 		playerref.AddSpell(SeductionSpell)		
 	endIf
@@ -139,12 +140,10 @@ function Maintenance() ; Called by the player ref script attached to player alia
 		SetupRefs()
 		Version = 0.4
 	endif
-	if(Version < 1.03)		
-		tfcInstalled = game.GetFormFromFile(0x0000801, "TrueFormCurse.esp") != none	
-		Version = 1.03
-	endif
 	
 	if(Version < 1.1)
+		tfcInstalled = game.GetFormFromFile(0x0000801, "TrueFormCurse.esp") != none
+		tfcIntegrated = tfcInstalled
 		if(EnableSOAS)		
 			playerref.AddSpell(InfluenceSpell)			
 		endif
@@ -599,7 +598,7 @@ endFunction
 ;;;;;;;;;;;;;;;;;;;
 
 function TurnToCursedForm()
-	if(!tfcInstalled)
+	if(!tfcIntegrated)
 		return
 	endif
 	int handle  = ModEvent.Create("TFCForceTurnIntoForm")
@@ -610,7 +609,7 @@ function TurnToCursedForm()
 endfunction
 
 function TurnToTrueForm()
-	if(!tfcInstalled)
+	if(!tfcIntegrated)
 		return
 	endif
 	int handle  = ModEvent.Create("TFCTurnIntoTrueForm")
