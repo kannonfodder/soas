@@ -3,6 +3,7 @@ Scriptname SoaS_Core extends Quest
 Actor Property playerref auto
 
 Faction Property forcelevel0Faction auto
+Faction Property forcelevel05Faction auto
 Faction Property forcelevel1Faction auto
 Faction Property forcelevel2Faction auto
 Faction Property forcelevel3Faction Auto
@@ -37,7 +38,7 @@ float Property ForceRegenRate = 100.0 auto ; Life force regenerated per day
 bool Property EnableUncontrolledDrain = true auto
 bool Property DisableEssentialFlags = false auto
 
-float Property PlayerLifeForce = 150.0 auto
+float Property PlayerLifeForce = 200.0 auto
 float PlayerLifeForceLastCheckTime = 0.0
 float Property PlayerLifeForceConstantDrain = 100.0 auto
 
@@ -76,7 +77,8 @@ float thirdActorInitialForce
 float secondActorPassiveDrain
 float thirdActorPassiveDrain
 
-float level1Limit = 100.0
+float level1Limit = 75.0
+float level15Limit = 150.0
 float level2Limit = 400.0
 float level3Limit = 490.0
 
@@ -208,6 +210,7 @@ function DisableMod()
 	playerref.RemoveSpell(PowerOfLilith)
 	playerref.RemoveSpell(SeductionSpell)
 	playerref.RemoveFromFaction(forcelevel0Faction)
+	playerref.RemoveFromFaction(forcelevel05Faction)
 	playerref.RemoveFromFaction(forcelevel1Faction)
 	playerref.RemoveFromFaction(forcelevel2Faction)
 	playerref.RemoveFromFaction(forcelevel3Faction)
@@ -456,10 +459,26 @@ function CalculateLilithChanges(bool silent = false)
 			notificationMessage = "I feel all my strength leaving me, I know I need to kill to regain it"
 
 			playerref.AddToFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
 			TurnToCursedForm()
+		endif
+	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level15Limit)
+		if(!playerref.IsInFaction(forcelevel05Faction))
+			if playerRef.IsInFaction(forcelevel0Faction)
+				notificationMessage = "I feel stronger, but still not my usual self"
+			else
+				notificationMessage = "I feel my strength fading, I must feed more"
+			endif
+
+			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.AddToFaction(forcelevel05Faction)
+			playerref.RemoveFromFaction(forcelevel1Faction)
+			playerref.RemoveFromFaction(forcelevel2Faction)
+			playerref.RemoveFromFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level2Limit)		
 		if(!playerref.IsInFaction(forcelevel1Faction))
@@ -469,6 +488,7 @@ function CalculateLilithChanges(bool silent = false)
 				notificationMessage = "I don't feel Lilith's boon. I must kill more to attain her power"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.AddToFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
@@ -482,6 +502,7 @@ function CalculateLilithChanges(bool silent = false)
 				notificationMessage = "I've lost my ultimate power, but I can get it back"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.AddToFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
@@ -493,6 +514,7 @@ function CalculateLilithChanges(bool silent = false)
 				notificationMessage = "This is what true power feels like!"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.AddToFaction(forcelevel3Faction)

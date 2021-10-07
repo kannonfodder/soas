@@ -23,8 +23,9 @@
 		<Import>https://github.com/MrOctopus/nl_mcm/tree/main/main/scripts/source</Import>
         <Import>https://github.com/MrOctopus/nl_online/tree/main/skyui/source</Import>
         <Import>https://github.com/MrOctopus/nl_online/tree/main/skse64/source</Import>
-        <Import>https://github.com/MrOctopus/nl_online/tree/main/sse/source</Import>		
+        <Import>https://github.com/MrOctopus/nl_online/tree/main/sse/source</Import>
         <Import>https://github.com/Sairion350/OOPapyrus/tree/main/scripts/source</Import>
+        <Import>https://github.com/powerof3/PapyrusExtenderSSE/tree/master/src/Papyrus</Import>
   </Imports>
     <Folders>
         <Folder>@MyProject\Scripts\Source</Folder>
