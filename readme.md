@@ -8,6 +8,7 @@ Version 1.1 Changes:
 - Seduction spell now has a chance of failure based on the relative level of you and your opponent
 - Influence anyone around you into liking you more
 - True form curse integration: When running low on life force you can turn into a form of your choice (configured in the mcm)
+- Removed requirements for seduction spell to drain. Any sex (except started with the up arrow in ostim) will allow you to drain 
 
 
 ### Features
