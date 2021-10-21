@@ -684,12 +684,12 @@ endFunction
 ;;;;;;;;;;;
 
 event OnKeyDown(int keycode)
-	if(ostim.AnimationRunning() || Utility.IsInMenuMode())
-		return
-	endif
-	if(keycode == 80)
-		AddExpAndCalculateChanges(100)
-	endif
+	; if(ostim.AnimationRunning() || Utility.IsInMenuMode())
+	; 	return
+	; endif
+	; if(keycode == 80)
+	; 	AddExpAndCalculateChanges(100)
+	; endif
 endevent
 
 
