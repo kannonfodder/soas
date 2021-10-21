@@ -32,3 +32,7 @@ Head to the [Project Board](https://github.com/kannonfodder/soas/projects/1) to 
 
 
 * [Ostim](https://github.com/Sairion350/OStim)
+
+New for 1.1
+
+- [Custom Skills Framework](https://www.nexusmods.com/skyrimspecialedition/mods/41780)
