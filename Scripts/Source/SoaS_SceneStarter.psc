@@ -49,8 +49,10 @@ event onUpdate()
     if(target1 != none)
         if(target2 != none)
             ostim.StartScene(playerRef, target1, zThirdActor = target2)
+            ostim.AddSceneMetadata("SoaS")
         else
             ostim.StartScene(playerRef, target1)
+            ostim.AddSceneMetadata("SoaS")
         endif
         
     endif

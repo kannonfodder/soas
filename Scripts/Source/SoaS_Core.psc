@@ -3,24 +3,42 @@ Scriptname SoaS_Core extends Quest
 Actor Property playerref auto
 
 Faction Property forcelevel0Faction auto
+Faction Property forcelevel05Faction auto
 Faction Property forcelevel1Faction auto
 Faction Property forcelevel2Faction auto
 Faction Property forcelevel3Faction Auto
 
-Faction Property SeducedFaction Auto
-
-Bool Property EnableSOAS auto
+Bool Property EnableSOAS = true auto
 
 float Property DrainedForce auto
-float Property PassiveDrainModifier = 0.9 auto
-float Property DrainResultModifier = 1.0 auto
+float _baseDrainResult = 1.0
+float Property PassiveDrainModifier
+	function set(float newVal)
+		_baseDrainResult = newVal
+	endFunction
+	float function get()
+		if (playerRef.HasPerk(DrainRate00))
+			return _baseDrainResult * 2
+		elseIf (playerRef.HasPerk(DrainRate80))
+			return _baseDrainResult * 1.8
+		elseIf (playerRef.HasPerk(DrainRate60))
+			return _baseDrainResult * 1.6
+		elseIf (playerRef.HasPerk(DrainRate40))				
+			return _baseDrainResult * 1.4
+		elseIf (playerRef.HasPerk(DrainRate20))
+			return _baseDrainResult * 1.2
+		else
+			return _baseDrainResult
+		endif			
+	endFunction
+endProperty
 float Property ActiveDrainAmount = 30.0 auto
 float Property ForceRegenRate = 100.0 auto ; Life force regenerated per day
 
 bool Property EnableUncontrolledDrain = true auto
-bool property DisableEssentialFlags = false auto
+bool Property DisableEssentialFlags = false auto
 
-float Property PlayerLifeForce = 150.0 auto
+float Property PlayerLifeForce = 200.0 auto
 float PlayerLifeForceLastCheckTime = 0.0
 float Property PlayerLifeForceConstantDrain = 100.0 auto
 
@@ -28,19 +46,20 @@ float Property PlayerLifeForceConstantDrain = 100.0 auto
 int Property SweetestTasteKeyCode = 39 auto
 Spell Property SweetestTasteAbility auto
 
-string property LifeForceName = "soas_life_force" auto
-string property LifeForceCheckName = "soas_life_force_check" auto
+string Property LifeForceName = "soas_life_force" auto
+string Property LifeForceCheckName = "soas_life_force_check" auto
 
-Spell property PowerOfLilith auto
+Spell Property PowerOfLilith auto
 
-Spell property DrainSpell auto
-Spell property SoulDrainAbility auto
-Spell property SeductionSpell auto
+Spell Property DrainSpell auto
+Spell Property SoulDrainAbility auto
+Spell Property SeductionSpell auto
+Spell Property InfluenceSpell auto
 
 
-Spell property VictimDebuff50 auto
-Spell property VictimDebuff25 auto
-Spell property VictimDebuff5 auto
+Spell Property VictimDebuff50 auto
+Spell Property VictimDebuff25 auto
+Spell Property VictimDebuff5 auto
 	
 OsexIntegrationMain ostim 
 OSexBar PlayerForceBar
@@ -50,7 +69,7 @@ OSexBar Property ThirdActorForceBar auto
 Actor secondActor = none
 Actor thirdActor = none
 
-bool property DrainActive = true auto
+bool Property DrainActive = true auto
 
 float secondActorInitialForce
 float thirdActorInitialForce
@@ -58,41 +77,101 @@ float thirdActorInitialForce
 float secondActorPassiveDrain
 float thirdActorPassiveDrain
 
-float level1Limit = 100.0
+float level1Limit = 75.0
+float level15Limit = 150.0
 float level2Limit = 400.0
 float level3Limit = 490.0
 
 float MaxPlayerLifeForce = 500.0
 
-bool secondActorSeduced = false
-bool thirdActorSeduced = false
+float Property Version auto
 
-bool property InSeducedScene = false auto
+int Property maxInfluencedActors = 2 auto
+Actor[] Property InfluencedActors auto
 
-float property Version auto
+;;;;;;;;;;;;;;;;;;;
+; TFC Integration ;
+;;;;;;;;;;;;;;;;;;;
+
+bool Property tfcInstalled = false auto
+bool Property tfcIntegrated = false auto
+int Property tfcCurseFormId = 1 auto ; value in tfc, ranges from 1 - 16
+
+;;;;;;;;;;;;;;;;;
+;; Progression ;;
+;;;;;;;;;;;;;;;;;
+
+float Property CurrentExp = 0.0 auto
+float killExpValue = 100.0
+float overdrainExpValue = 0.2
+float Property nextRequiredExp = 0.0 auto
+GlobalVariable Property SuccubusLevel auto 
+GlobalVariable Property SuccubusLevelUpRatio auto ; level up % for bar
+GlobalVariable Property SuccubusSavedLevels auto 
+Message Property SaveOrSpendMessage auto
+
+Perk Property DrainRate20 auto
+Perk Property DrainRate40 auto
+Perk Property DrainRate60 auto
+Perk Property DrainRate80 auto
+Perk Property DrainRate00 auto
+
+SoaS_MCM_SpendPoints Property SpendPointsMCM auto
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Message Queueing ;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+string[] messageQueue
+
 
 event OnInit()
 	Debug.Notification("Setting up SoaS")
-	SetupRefs()
+	Maintenance()
 endEvent
 
 function Maintenance() ; Called by the player ref script attached to player alias
+	if(SuccubusLevel.GetValueInt() == 0)
+		SuccubusLevel.SetValue(1)
+	endIf
+	if(Version == 0 && EnableSOAS)			
+		playerref.AddSpell(PowerOfLilith)
+		playerref.AddSpell(SeductionSpell)		
+	endIf
 	if(Version < 0.4)
 		SetupRefs()
 		Version = 0.4
 	endif
+	
+	if(Version < 1.1)
+		tfcInstalled = game.GetFormFromFile(0x0000801, "TrueFormCurse.esp") != none
+		tfcIntegrated = tfcInstalled
+		if(EnableSOAS)		
+			playerref.AddSpell(InfluenceSpell)			
+		endif
+		InfluencedActors = PapyrusUtil.ActorArray(0)
+		CalculateNextRequiredExp()
+		messageQueue = PapyrusUtil.StringArray(10)
+		if( nl_mcm_globalinfo.CurrentVersion() < 105 )
+			Debug.MessageBox(" Soul of a Succubus requires the latest version of nl_mcm (at least 1.0.5) to work properly. Go get it")
+		endif
+	endif
+	
+	Version = 1.1	
+	
 	if(EnableSOAS)
 		RegisterForModEvents()
 	endIf
+	RegisterForSingleUpdate(3.0)
 endFunction
 
 function SetupRefs()
 	ostim = game.GetFormFromFile(0x000801, "Ostim.esp") as OsexIntegrationMain	
-	
 	PlayerForceBar = (Self as Quest) as OSexBar
 	InitPlayerForceBar()
 	InitVictimForceBar(SecondActorForceBar, 0)
 	InitVictimForceBar(ThirdActorForceBar, 1)
+	RegisterForKey(80) ; DEBUG
 endFunction
 
 function ToggleEnableMod()
@@ -109,6 +188,7 @@ function EnableMod()
 	RegisterForModEvents()
 	playerref.AddSpell(PowerOfLilith)
 	playerref.AddSpell(SeductionSpell)
+	playerref.AddSpell(InfluenceSpell)
 	RegisterForSingleUpdate(3.0)
 endFunction
 
@@ -130,6 +210,7 @@ function DisableMod()
 	playerref.RemoveSpell(PowerOfLilith)
 	playerref.RemoveSpell(SeductionSpell)
 	playerref.RemoveFromFaction(forcelevel0Faction)
+	playerref.RemoveFromFaction(forcelevel05Faction)
 	playerref.RemoveFromFaction(forcelevel1Faction)
 	playerref.RemoveFromFaction(forcelevel2Faction)
 	playerref.RemoveFromFaction(forcelevel3Faction)
@@ -156,7 +237,9 @@ endEvent
 
 event OstimStartScene(string eventName, string strArg, float numArg, Form sender)	
 	ResetActors()
-
+	if(ostim.HasSceneMetadata("Ostim_Manual_Start"))
+		return 
+	endif
 	Actor[] currentActors = ostim.GetActors()
 	bool IsPlayerInvolved = ostim.IsPlayerInvolved()
 	if (IsPlayerInvolved)
@@ -178,43 +261,29 @@ event OstimStartScene(string eventName, string strArg, float numArg, Form sender
 			secondActor = currentActors[0]
 			thirdActor = currentActors[1]	
 		endif	
-		
-		if(secondActor.IsInFaction(SeducedFaction))
-			secondActorSeduced = true
-		endif
-		if(thirdActor && thirdActor.IsInFaction(SeducedFaction))
-			thirdActorSeduced = true
-		endif
-		if(!secondActorSeduced && !thirdActorSeduced)
-			return
-		Else
-			InSeducedScene = true
-		endif
 
 		PlayerForceBar.ForcePercent(PlayerLifeForce / MaxPlayerLifeForce)
 		SetBarVisible(PlayerForceBar, true)
 		float currentSecondActorForce = 0.0
 		float currentThirdActorForce = 0.0
 
-		if(secondActorSeduced)
-			secondActorInitialForce = StartPassiveDrain(secondActor, SecondActorForceBar)
-			currentSecondActorForce = secondActorInitialForce
-		endif
-		if(thirdActor != None && thirdActorSeduced)
+		secondActorInitialForce = StartPassiveDrain(secondActor, SecondActorForceBar)
+		currentSecondActorForce = secondActorInitialForce
+
+		if(thirdActor != None)
 			thirdActorInitialForce = StartPassiveDrain(thirdActor, ThirdActorForcebar)
 			currentThirdActorForce = thirdActorInitialForce
 		endif		
 		
 		
-
+		float cachedDrainModifier = PassiveDrainModifier
 		While (ostim.animationRunning())
 			Utility.Wait(1)
 			if (DrainActive)
-				if(secondActorSeduced)
-					currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar)
-				endif
-				if(thirdActor != None && thirdActorSeduced)
-					currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar)
+				currentSecondActorForce = PassiveDrainActor(secondActor, currentSecondActorForce, SecondActorForceBar, cachedDrainModifier)
+
+				if(thirdActor != None)
+					currentThirdActorForce = PassiveDrainActor(thirdActor, currentThirdActorForce, ThirdActorForceBar, cachedDrainModifier)
 				endif
 			endif
 		EndWhile
@@ -229,12 +298,14 @@ event OStimEndScene(string eventName, string strArg, float numArg, Form sender)
 		;VictimDebuff5.Cast(secondActor)		
 	endif
 	SetBarVisible(PlayerForceBar, false)
-	InSeducedScene = false
 	secondActor.DispelSpell(SeductionSpell)
 	if(thirdActor)
 		thirdActor.DispelSpell(SeductionSpell)
 	endif
 	ResetActors()
+	Utility.Wait(1)
+	CalculateExpChanges()
+	SendQueuedMessages()
 endEvent
 
 event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
@@ -246,7 +317,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 				PerformUncontrolledDrain()
 			endif
 		endif		
-	Elseif(orgasmer == secondActor && secondActorSeduced)
+	Elseif(orgasmer == secondActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
 			MiscUtil.PrintConsole("SoaS: Key Pressed - performing sweetest taste")
 			PerformSweetestTaste(secondActor)
@@ -254,7 +325,7 @@ event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 			MiscUtil.PrintConsole("SoaS: Key NOT Pressed ")
 			
 		endif
-	ElseIf(orgasmer == thirdActor && thirdActorSeduced)
+	ElseIf(orgasmer == thirdActor)
 		if(Input.IsKeyPressed(SweetestTasteKeyCode))
 			PerformSweetestTaste(thirdActor)
 		endif		
@@ -266,9 +337,7 @@ function ResetActors()
 	SetBarVisible(ThirdActorForceBar, false)
 
 	secondActor = None
-	secondActorSeduced = false
 	thirdActor = None
-	thirdActorSeduced = false
 
 	secondActorPassiveDrain = 0.0
 	thirdActorPassiveDrain = 0.0
@@ -282,7 +351,7 @@ float function StartPassiveDrain(Actor act, OSexBar bar)
 	return initialForce
 endFunction
 
-float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar)	
+float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorForceBar, float cachedDrainModifier)	
 	float playerComponent = ostim.GetActorExcitement(playerref) + 1
 	if(playerComponent > 100.0)
 		playerComponent = 100.0
@@ -298,7 +367,7 @@ float function PassiveDrainActor(Actor act, float initialForce, OSexBar actorFor
 		victimExcitement = 100.0
 	endif
 	float victimComponent = Math.pow(victimExcitement, 1.5)
-	float passiveDrainAmount = (PassiveDrainModifier * (victimComponent) * (playerComponent)) / 10000
+	float passiveDrainAmount = (cachedDrainModifier * (victimComponent) * (playerComponent)) / 10000 
 
 	;MiscUtil.PrintConsole("SoaS: Drain Amount: " + passiveDrainAmount)
 	if(initialForce >= 1.0)
@@ -329,6 +398,7 @@ function PerformSweetestTaste(Actor act)
 	if(AttemptDeadlyDrain(act, ActiveDrainAmount * 1.5, true)) ; Succubus wants to kill the victim: Drain 1.5x the active drain amount from the victim
 		AbsorbForce(25, true) ; free force, should push level 0 -> level 1		
 		SweetestTasteAbility.Cast(playerref) ; Only applies buffs if within the corect faction (Spell/ME condition controlled)
+		AddExp(killExpValue) ; Only reward exp if within sweetest taste
 	endif
 endFunction
 
@@ -343,9 +413,12 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 			actBase.SetEssential(false)
 			actBase.SetProtected(false)
 		endif
+		DrainSpell.Cast(playerref, act)
+		;DrainSpell.RemoteCast(playerref, playerref, act)
+		while(!act.IsDead())
+			Utility.Wait(0.3)
+		endWhile
 		ostim.EndAnimation()
-		Utility.Wait(0.5)
-		DrainSpell.RemoteCast(playerref, playerref, act)
 		return true
 	Else
 		AbsorbForce(amountToDrain)
@@ -356,20 +429,22 @@ bool function AttemptDeadlyDrain(Actor act, float amountToDrain, bool controlled
 endFunction
 
 function AbsorbForce(float amount, bool ignoreLevelLimit = false)
-	float absorbValue = amount * DrainResultModifier
+	float absorbValue = amount
 	DrainedForce += absorbValue
 	if(!ignoreLevelLimit && playerRef.IsInFaction(forcelevel0Faction) && PlayerLifeForce + absorbValue > level1Limit)
 		PlayerLifeForce = level1Limit
 	else
 		if(PlayerLifeForce + absorbValue > MaxPlayerLifeForce)
-			PlayerLifeForce = MaxPlayerLifeForce
+			float overDrain = MaxPlayerLifeForce - (PlayerLifeForce + absorbValue)
+			AddExp(overdrainExpValue * overDrain)
+			PlayerLifeForce = MaxPlayerLifeForce			
 		Else
 			PlayerLifeForce += absorbValue
 		endif
 	endif
 	
 	PlayerForceBar.SetPercent(PlayerLifeForce / MaxPlayerLifeForce)
-
+	
 	CalculateLilithChanges()
 		
 	;MiscUtil.PrintConsole("SoaS: Drained " + amount + " * " + drainresultmodifier + " = " + absorbValue);
@@ -384,10 +459,26 @@ function CalculateLilithChanges(bool silent = false)
 			notificationMessage = "I feel all my strength leaving me, I know I need to kill to regain it"
 
 			playerref.AddToFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
-			
+			TurnToCursedForm()
+		endif
+	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level15Limit)
+		if(!playerref.IsInFaction(forcelevel05Faction))
+			if playerRef.IsInFaction(forcelevel0Faction)
+				notificationMessage = "I feel stronger, but still not my usual self"
+			else
+				notificationMessage = "I feel my strength fading, I must feed more"
+			endif
+
+			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.AddToFaction(forcelevel05Faction)
+			playerref.RemoveFromFaction(forcelevel1Faction)
+			playerref.RemoveFromFaction(forcelevel2Faction)
+			playerref.RemoveFromFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level2Limit)		
 		if(!playerref.IsInFaction(forcelevel1Faction))
@@ -397,9 +488,11 @@ function CalculateLilithChanges(bool silent = false)
 				notificationMessage = "I don't feel Lilith's boon. I must kill more to attain her power"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.AddToFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level2Limit && PlayerLifeForce <= level3Limit)	
 		if(!playerref.IsInFaction(forcelevel2Faction))
@@ -409,9 +502,11 @@ function CalculateLilithChanges(bool silent = false)
 				notificationMessage = "I've lost my ultimate power, but I can get it back"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.AddToFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level3Limit)		
 		if(!playerref.IsInFaction(forcelevel3Faction))
@@ -419,15 +514,59 @@ function CalculateLilithChanges(bool silent = false)
 				notificationMessage = "This is what true power feels like!"
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
+			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.AddToFaction(forcelevel3Faction)
+			TurnToTrueForm()
 		endif
 	endif
 	if(!silent)
-		Debug.Notification(notificationMessage)
+		QueueNotification(notificationMessage)
 	endif
 endFunction
+
+float function GetLifeForce(Actor act)
+	
+	float lastCheckTime =  StorageUtil.GetFloatValue(act as form, LifeForceCheckName, 0)
+	StorageUtil.SetFloatValue(act, LifeForceCheckName, Utility.GetCurrentGameTime())
+
+	float storedAmount = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
+	if(lastcheckTime > 0)		
+		float currenttime = Utility.GetCurrentGameTime()
+		float timePassed = currenttime - lastCheckTime
+		float regenAmount = ForceRegenRate * timePassed
+		if(regenAmount > 100.0 - storedAmount)
+			storedAmount = 100.0
+		else
+			storedAmount += regenAmount
+		endif
+		SetLifeForce(act, storedAmount)
+	endif
+	return storedAmount
+endFunction
+
+function SetLifeForce(Actor act, float amount)
+	StorageUtil.SetFloatValue(act as form, LifeForceName, amount)
+endFunction
+
+
+function InfluenceActor(Actor act)
+	if(InfluencedActors.Length == maxInfluencedActors)
+		InfluencedActors[0].DispelSpell(InfluenceSpell)
+		InfluencedActors = PapyrusUtil.RemoveActor(InfluencedActors, InfluencedActors[0])
+	endif
+	InfluencedActors = PapyrusUtil.PushActor(InfluencedActors, act)
+endFunction
+
+function UnInfluenceActor(Actor act)	
+	InfluencedActors = PapyrusUtil.RemoveActor(InfluencedActors, act)
+endFunction
+
+;;;;;;;;;;
+;;; UI ;;;
+;;;;;;;;;;
+
 
 function InitPlayerForceBar()
 	PlayerForceBar.HAnchor = "left"
@@ -470,35 +609,112 @@ function SetBarVisible(Osexbar bar, Bool visible)
 	EndIf
 endFunction
 
-float function GetLifeForce(Actor act)
-	
-	float lastCheckTime =  StorageUtil.GetFloatValue(act as form, LifeForceCheckName, 0)
-	StorageUtil.SetFloatValue(act, LifeForceCheckName, Utility.GetCurrentGameTime())
-
-	float storedAmount = StorageUtil.GetFloatValue(act as form, LifeForceName, 100)
-	if(lastcheckTime > 0)		
-		float currenttime = Utility.GetCurrentGameTime()
-		float timePassed = currenttime - lastCheckTime
-		float regenAmount = ForceRegenRate * timePassed
-		if(regenAmount > 100.0 - storedAmount)
-			storedAmount = 100.0
-		else
-			storedAmount += regenAmount
-		endif
-		SetLifeForce(act, storedAmount)
-	endif
-	return storedAmount
-endFunction
-
-function SetLifeForce(Actor act, float amount)
-	StorageUtil.SetFloatValue(act as form, LifeForceName, amount)
-endFunction
-
-
 function ShowPlayerForceBar()
 	SetBarVisible(PlayerForceBar, true)
 	Utility.Wait(5)
 	SetBarVisible(PlayerForceBar, false)
 endFunction
 
+;;;;;;;;;;;;;;;;;;;
+; TFC Integration ;
+;;;;;;;;;;;;;;;;;;;
 
+function TurnToCursedForm()
+	if(!tfcIntegrated)
+		return
+	endif
+	int handle  = ModEvent.Create("TFCForceTurnIntoForm")
+	if(handle)
+		ModEvent.PushInt(handle, tfcCurseFormId)
+		ModEvent.Send(handle)
+	endif	
+endfunction
+
+function TurnToTrueForm()
+	if(!tfcIntegrated)
+		return
+	endif
+	int handle  = ModEvent.Create("TFCTurnIntoTrueForm")
+	if(handle)
+		ModEvent.Send(handle)
+	endif	
+endFunction
+
+
+;;;;;;;;;;;;;;;;;
+;; Progression ;;
+;;;;;;;;;;;;;;;;;
+
+function AddExp(float exp)
+	CurrentExp = CurrentExp + exp
+endFunction
+
+function AddExpAndCalculateChanges(float exp)
+	CurrentExp = CurrentExp + exp
+	CalculateExpChanges()
+endFunction
+
+function CalculateNextRequiredExp()	
+	nextRequiredExp = nextRequiredExp + ( 45 * Math.Log(Math.Pow(SuccubusLevel.GetValue(), 2) + Math.Pow(playerref.GetLevel() * 5, 2)) )
+endfunction
+
+function CalculateExpChanges()
+	
+	while(CurrentExp > nextRequiredExp) ; Level Up	
+		SuccubusLevelUpRatio.SetValue(1.0)			
+		CalculateNextRequiredExp()
+		SuccubusSavedLevels.SetValue(SuccubusSavedLevels.GetValue() + 1)
+		UpdateCurrentInstanceGlobal(SuccubusSavedLevels)
+		
+		int selection = SaveOrSpendMessage.Show()
+		if(selection == 0)
+		else
+			Utility.Wait(0.1)
+			
+			SpendPointsMCM.OpenMCM("Skill Points")
+		endif		
+		Utility.Wait(0.75)
+	endWhile
+	SuccubusLevelUpRatio.SetValue(CurrentExp / nextRequiredExp)
+endFunction
+
+
+;;;;;;;;;;;
+;; Debug ;;
+;;;;;;;;;;;
+
+event OnKeyDown(int keycode)
+	; if(ostim.AnimationRunning() || Utility.IsInMenuMode())
+	; 	return
+	; endif
+	; if(keycode == 80)
+	; 	AddExpAndCalculateChanges(100)
+	; endif
+endevent
+
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Message Queueing ;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+
+function QueueNotification(string notification)
+	if(ostim.AnimationRunning())
+		messageQueue = PapyrusUtil.PushString(messageQueue, notification)
+	else
+		Debug.Notification(notification)
+	endif
+endFunction
+
+function SendQueuedMessages()
+	int i = 0
+	while (i < messageQueue.Length)
+		string val = messageQueue[i]
+		if(val != "")
+			Debug.Notification(val)
+			Utility.Wait(0.5)
+		endIf
+		i = i + 1
+	endWhile
+	messageQueue = PapyrusUtil.StringArray(10)
+endFunction
