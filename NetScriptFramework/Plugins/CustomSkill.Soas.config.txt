@@ -75,7 +75,7 @@ Node1.X = 0
 Node1.Y = 0
 Node1.GridX = 1
 Node1.GridY = 1
-Node1.Links = "2 3"
+Node1.Links = "3"
 
 #IncreaseBuff2
 #Node2.Enable = true
