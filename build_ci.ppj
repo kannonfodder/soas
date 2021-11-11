@@ -5,7 +5,7 @@
     Output="Scripts" 
     Optimize="true" 
     Anonymize="true" 
-    Package="false" 
+    Package="true" 
     Zip="true">
   <Variables>
     <Variable Name="Namespace" Value="Soul of a Succubus"/>
@@ -34,7 +34,6 @@
     <Package Name="SoaS" RootDir="@MyProject">
     <Include>**/scripts/*.pex</Include>
     <Include>**/scripts/source/*.psc</Include>
-	<Include>**/NetScriptFramework/**/*.*</Include>
     </Package>
    </Packages>
    
@@ -42,6 +41,7 @@
         <ZipFile Name="@ModName" RootDir="@MyProject" Compression="deflate">
         	<Include NoRecurse="true">*.esp</Include>
 	        <Include NoRecurse="true">*.bsa</Include>
+			<Include NoRecurse="false">**/NetScriptFramework/Plugins/*.*</Include>
         </ZipFile>
     </ZipFiles>
 </PapyrusProject>
