@@ -5,7 +5,7 @@
     Output="Scripts" 
     Optimize="true" 
     Anonymize="true" 
-    Package="true" 
+    Package="false" 
     Zip="true">
   <Variables>
     <Variable Name="Namespace" Value="Soul of a Succubus"/>
