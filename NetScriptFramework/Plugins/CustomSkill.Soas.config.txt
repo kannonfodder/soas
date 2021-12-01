@@ -3,12 +3,12 @@ Name = "Succubus"
 
 # Description of skill will appear in custom perks menu under the name and level, set "" to clear it
 # if you don't want to show anything
-Description = "Your soul strength"
+Description = "Your ability to drain power from your sexual partners. Your soul grows in strength as you drain and kill mortals through sex acts."
 
 # Custom background nif, INTVampirePerkSkydome.nif is showing the werewolf background, if you use custom
 # nif you made it must have some nodes and images, recommended is to edit this nif instead of creating
 # new from scratch. If you use "Interface/INTPerkSkydome.nif" as base then you must set SkydomeNormalNif to true
-Skydome = "DLC01/Interface/INTVampirePerkSkydome.nif"
+Skydome = "soas/constellation.nif"
 SkydomeNormalNif = false
 
 # This should point to a global variable that contains the current level of skill. Must be set!
@@ -72,9 +72,9 @@ Node1.Enable = true
 Node1.PerkFile = "soas.esp"
 Node1.PerkId = 0xDAA
 Node1.X = 0
-Node1.Y = 0
-Node1.GridX = 1
-Node1.GridY = 1
+Node1.Y = 0.9
+Node1.GridX = 2
+Node1.GridY = 0
 Node1.Links = "3"
 
 #IncreaseBuff2
@@ -90,10 +90,10 @@ Node1.Links = "3"
 Node3.Enable = true
 Node3.PerkFile = "soas.esp"
 Node3.PerkId = 0x8E6
-Node3.X = -0.5
-Node3.Y = -0.5
-Node3.GridX = 2
-Node3.GridY = 2
+Node3.X = -0.3
+Node3.Y = 0.7
+Node3.GridX = 5
+Node3.GridY = 1
 
 #Drain Rate
 Node4.Enable = true
@@ -101,7 +101,7 @@ Node4.PerkFile = "soas.esp"
 Node4.PerkID = 0x826
 Node4.X = 0
 Node4.Y = 0
-Node4.GridX = 1
+Node4.GridX = 2
 Node4.GridY = 0
 Node4.Links = "1 5"
 
@@ -109,8 +109,8 @@ Node4.Links = "1 5"
 Node5.Enable = true
 Node5.PerkFile = "soas.esp"
 Node5.PerkID = 0xE22
-Node5.X = 0.5
-Node5.Y = 0.5
+Node5.X = -0.7
+Node5.Y = 0.7
 Node5.GridX = 0
 Node5.GridY = 1
 

@@ -32,8 +32,10 @@
     </Folders>
   <Packages Output="@MyProject">
     <Package Name="SoaS" RootDir="@MyProject">
-    <Include>**/scripts/*.pex</Include>
-    <Include>**/scripts/source/*.psc</Include>
+		<Include>**/scripts/*.pex</Include>
+		<Include>**/scripts/source/*.psc</Include>
+		<Include NoRecurse="false">**/textures/**/*.*</Include>
+		<Include NoRecurse="false">**/meshes/**/*.*</Include>
     </Package>
    </Packages>
    

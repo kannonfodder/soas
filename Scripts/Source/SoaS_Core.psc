@@ -458,11 +458,13 @@ function CalculateLilithChanges(bool silent = false)
 			
 			notificationMessage = "I feel all my strength leaving me, I know I need to kill to regain it"
 
-			playerref.AddToFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+
+			
+			playerref.AddToFaction(forcelevel0Faction)
 			TurnToCursedForm()
 		endif
 	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level15Limit)
@@ -474,10 +476,11 @@ function CalculateLilithChanges(bool silent = false)
 			endif
 
 			playerref.RemoveFromFaction(forcelevel0Faction)
-			playerref.AddToFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			
+			playerref.AddToFaction(forcelevel05Faction)
 			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level1Limit && PlayerLifeForce <= level2Limit)		
@@ -489,9 +492,10 @@ function CalculateLilithChanges(bool silent = false)
 			endif
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel05Faction)
-			playerref.AddToFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			
+			playerref.AddToFaction(forcelevel1Faction)
 			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level2Limit && PlayerLifeForce <= level3Limit)	
@@ -504,8 +508,9 @@ function CalculateLilithChanges(bool silent = false)
 			playerref.RemoveFromFaction(forcelevel0Faction)
 			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
-			playerref.AddToFaction(forcelevel2Faction)
 			playerref.RemoveFromFaction(forcelevel3Faction)
+			
+			playerref.AddToFaction(forcelevel2Faction)
 			TurnToTrueForm()
 		endif
 	elseif(PlayerLifeForce > level3Limit)		
@@ -517,6 +522,7 @@ function CalculateLilithChanges(bool silent = false)
 			playerref.RemoveFromFaction(forcelevel05Faction)
 			playerref.RemoveFromFaction(forcelevel1Faction)
 			playerref.RemoveFromFaction(forcelevel2Faction)
+			
 			playerref.AddToFaction(forcelevel3Faction)
 			TurnToTrueForm()
 		endif
