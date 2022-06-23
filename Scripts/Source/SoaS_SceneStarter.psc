@@ -5,7 +5,8 @@ Actor property playerRef auto
 Actor target1 
 Actor target2
 float startDistance = 150.0
-int mode 
+int mode ;0 = startup 1 = scene started
+int startAttemptCounter = 0
 
 function StartSceneProximity(Actor target)
     if(!SetupTarget(target))
@@ -15,6 +16,7 @@ function StartSceneProximity(Actor target)
         mode = 0
         RegisterForSingleUpdate(3.0)
         sceneStarting = true
+        startAttemptCounter = 0
     endif
 endFunction
 
@@ -39,8 +41,13 @@ endFunction
 
 event onUpdate()
     if(mode == 0)    
-        if (target1 && playerRef.GetDistance(target1) > startDistance || (target2 && playerRef.GetDistance(target2) > startDistance))
+        if(startAttemptCounter > 90)
+            cleanUp()
+            MiscUtil.PrintConsole("SoaS: Scene start failed aborting")
+            return
+        elseif (target1 && playerRef.GetDistance(target1) > startDistance || (target2 && playerRef.GetDistance(target2) > startDistance))
             RegisterForSingleUpdate(1)
+            startAttemptCounter += 1
             return
         endif
     endif
@@ -56,9 +63,12 @@ event onUpdate()
         endif
         
     endif
-    ;cleanup
+    cleanUp()
+endEvent
+
+function cleanUp()
     sceneStarting = false
     target1 = none
     target2 = none
-endEvent
+endFunction
 
