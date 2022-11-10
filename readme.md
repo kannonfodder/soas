@@ -21,9 +21,6 @@ Version 1.1 Changes:
 
 To start simply enable in the mcm
 
-### Planned
-
-Head to the [Project Board](https://github.com/kannonfodder/soas/projects/1) to see planned and inprogress features
 
 ### Dependencies
 
